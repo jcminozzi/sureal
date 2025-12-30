@@ -41,7 +41,7 @@ function TransactionForm({ onClose, onSave, categories, cards }) {
     const [installmentsCount, setInstallmentsCount] = useState(2);
     const [isRecurring, setIsRecurring] = useState(false);
 
-    const { isListening, transcript, startListening, stopListening, isSupported } = useVoiceInput();
+    const { isListening, transcript, startListening, stopListening, isSupported, error: voiceError } = useVoiceInput();
     const { processImage, isProcessing, progress } = useOCR();
 
     useEffect(() => {
@@ -121,6 +121,12 @@ function TransactionForm({ onClose, onSave, categories, cards }) {
                         <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isProcessing} />
                     </label>
                 </div>
+
+                {voiceError && (
+                    <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-300 text-xs text-center">
+                        {voiceError}
+                    </div>
+                )}
 
                 <div className="flex gap-3 mb-6">
                     <button
