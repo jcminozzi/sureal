@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { MobileLayout, CATEGORIES } from './layouts/MobileLayout';
 import { DesktopLayout } from './layouts/DesktopLayout';
+import { WelcomeModal } from './components/WelcomeModal';
 import { addMonths, subMonths, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 
 const STORAGE_KEY = 'expense_tracker_data';
@@ -25,6 +26,23 @@ export default function App() {
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1280);
+
+  const [userName, setUserName] = useState(() => {
+    return localStorage.getItem('user_name') || '';
+  });
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    if (!userName) {
+      setShowWelcome(true);
+    }
+  }, [userName]);
+
+  const handleSaveName = (name) => {
+    setUserName(name);
+    localStorage.setItem('user_name', name);
+    setShowWelcome(false);
+  };
 
   // --- PERSISTENCE ---
   useEffect(() => {
@@ -134,8 +152,14 @@ export default function App() {
     categoryData,
     monthlyTransactions,
     goals,
-    setGoals
+    setGoals,
+    userName,
+    setUserName
   };
+
+  if (showWelcome) {
+    return <WelcomeModal onSave={handleSaveName} />;
+  }
 
   return isDesktop ? (
     <DesktopLayout {...sharedProps} />

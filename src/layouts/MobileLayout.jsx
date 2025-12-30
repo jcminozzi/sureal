@@ -4,7 +4,7 @@ import {
     Plus, TrendingUp, TrendingDown, Wallet, Calendar,
     MoreHorizontal, ChevronLeft, ChevronRight, X, Trash2,
     Check, CreditCard, PieChart, Search, Repeat,
-    Eye, EyeOff, Target
+    Eye, EyeOff, Target, Settings
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -12,6 +12,8 @@ import { BANKS } from '../constants/banks';
 import { calculateLevel } from '../utils/gamification';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { SmartTips } from '../components/SmartTips';
+import { SettingsModal } from '../components/SettingsModal';
 
 export const CATEGORIES = [
     { id: 'market', icon: '🛒', label: 'Mercado', color: '#f59e0b' },
@@ -166,11 +168,12 @@ function TransactionForm({ onClose, onSave, categories, cards }) {
 export function MobileLayout({
     balance, income, expenses, transactions, setTransactions,
     nextMonth, prevMonth, currentDate, addCard, deleteCard, cards,
-    goals, setGoals
+    goals, setGoals, userName
 }) {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('home');
     const [isPrivacyMode, setIsPrivacyMode] = useState(false);
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
     const formatMoney = (val) => isPrivacyMode ? '****' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
     const { currentLevel, progress } = calculateLevel(balance, transactions.length);
@@ -384,8 +387,12 @@ export function MobileLayout({
                             <button onClick={() => setIsPrivacyMode(!isPrivacyMode)} className="text-slate-500 hover:text-white pb-0.5">
                                 {isPrivacyMode ? <EyeOff size={14} /> : <Eye size={14} />}
                             </button>
+                            <button onClick={() => setIsSettingsModalOpen(true)} className="text-slate-500 hover:text-white pb-0.5">
+                                <Settings size={14} />
+                            </button>
                         </div>
                         <h1 className="text-lg font-bold">Meus Gastinhos</h1>
+                        <span className="text-xs text-slate-400">Olá, {userName || 'Usuário'}</span>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 bg-slate-800 rounded-full px-3 py-1 border border-slate-700">
@@ -433,6 +440,8 @@ export function MobileLayout({
             <AnimatePresence>
                 {isFormOpen && <TransactionForm onClose={() => setIsFormOpen(false)} onSave={(t) => { setTransactions([t, ...transactions]); setIsFormOpen(false); }} categories={CATEGORIES} cards={cards} />}
             </AnimatePresence>
+            {isSettingsModalOpen && <SettingsModal onClose={() => setIsSettingsModalOpen(false)} userName={userName} setUserName={setUserName} />}
+            <SmartTips transactions={transactions} income={income} expenses={expenses} balance={balance} />
         </div>
     );
 }

@@ -3,7 +3,7 @@ import {
     LayoutDashboard, Wallet, PieChart, Calendar as CalendarIcon, Settings,
     Plus, Search, Bell, TrendingUp, TrendingDown, DollarSign,
     ArrowUpRight, ArrowDownRight, CreditCard, Trash2, X, Check, Download, ChevronLeft, ChevronRight, Repeat,
-    Eye, EyeOff, Upload, Save
+    Eye, EyeOff, Upload, Save, Zap, User
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, getDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -11,6 +11,9 @@ import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { CATEGORIES } from './MobileLayout';
 import { BANKS } from '../constants/banks';
 import { calculateLevel } from '../utils/gamification';
+import { SmartTips } from '../components/SmartTips';
+import { SubscriptionModal } from '../components/SubscriptionModal';
+import { SettingsModal } from '../components/SettingsModal';
 
 function DesktopTransactionModal({ onClose, onSave, categories, cards }) {
     const [amount, setAmount] = useState('');
@@ -224,8 +227,8 @@ function MenuItem({ icon, label, active, onClick }) {
     );
 }
 
-function StatCard({ label, value, icon, color, sub }) {
-    const formatMoney = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+function StatCard({ label, value, icon, color, sub, isPrivacyMode }) {
+    const formatMoney = (v) => isPrivacyMode ? '****' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
     return (
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 p-6 rounded-2xl hover:scale-105 transition-transform cursor-default shadow-lg">
             <div className="flex justify-between items-start mb-4">
@@ -244,11 +247,13 @@ function StatCard({ label, value, icon, color, sub }) {
     )
 }
 
-export function DesktopLayout({ transactions, setTransactions, cards, addCard, deleteCard, cardInvoices, currentDate, nextMonth, prevMonth, balance, income, expenses }) {
+export function DesktopLayout({ transactions, setTransactions, cards, addCard, deleteCard, cardInvoices, currentDate, nextMonth, prevMonth, balance, income, expenses, userName, setUserName }) {
     const [activeTab, setActiveTab] = useState('dashboard');
     const [searchTerm, setSearchTerm] = useState('');
     const [isTxModalOpen, setIsTxModalOpen] = useState(false);
     const [isCardModalOpen, setIsCardModalOpen] = useState(false);
+    const [isSubModalOpen, setIsSubModalOpen] = useState(false);
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [isPrivacyMode, setIsPrivacyMode] = useState(false);
 
     const formatMoney = (v) => isPrivacyMode ? '****' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
@@ -279,13 +284,6 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
                     if (data.transactions && data.cards) {
                         if (confirm(`Restaurar backup de ${new Date(data.exportDate).toLocaleDateString()}? Isso substituirá os dados atuais.`)) {
                             setTransactions(data.transactions);
-                            // Assuming setCards is passed or we need to handle it. 
-                            // Wait, 'cards' prop is passed, but 'addCard'/'deleteCard' are functions. 
-                            // The persistence is likely in App.jsx. 
-                            // I need to update App.jsx to handle bulk restore or assume App.jsx passes a setCards prop?
-                            // Checking App.jsx... App.jsx handles persistence via localStorage mostly relying on 'transactions' and 'cards' state changes.
-                            // But I only have 'addCard' and 'deleteCard'. 
-                            // I will store IT in localStorage manually and reload for now, or trigger a full reload.
                             localStorage.setItem('transactions', JSON.stringify(data.transactions));
                             localStorage.setItem('cards', JSON.stringify(data.cards));
                             alert('Backup restaurado com sucesso! O app será recarregado.');
@@ -364,6 +362,38 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
                         <p>Relatórios detalhados em breve.</p>
                     </div>
                 );
+            case 'subscriptions':
+                const subs = transactions.filter(t => t.isSubscription || t.recurring);
+                return (
+                    <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8 h-full flex flex-col">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold text-white">Assinaturas Recorrentes</h2>
+                            <button onClick={() => setIsSubModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-lg transition-colors text-sm">
+                                <Plus size={16} /> Nova Assinatura
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4 overflow-y-auto custom-scrollbar">
+                            {subs.length === 0 && <div className="col-span-3 text-center py-10 text-slate-500">Nenhuma assinatura encontrada.</div>}
+                            {subs.map(sub => (
+                                <div key={sub.id} className="bg-slate-800 p-6 rounded-2xl border border-slate-700 flex items-center justify-between group hover:border-violet-500 transition-colors">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-xl bg-slate-700 flex items-center justify-center text-2xl">
+                                            {sub.categoryIcon}
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-white text-lg">{sub.description}</div>
+                                            <div className="text-sm text-slate-400">Recorrente Mensal</div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="font-bold text-white text-xl">{formatMoney(sub.amount)}</div>
+                                        <button onClick={() => { if (confirm('Remover assinatura?')) setTransactions(prev => prev.filter(x => x.id !== sub.id)) }} className="text-red-400 text-xs hover:underline mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Remover</button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
             case 'dashboard':
             default:
                 return (
@@ -421,6 +451,12 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
                                             BANKS.find(b => card.bankName && card.bankName.toLowerCase().includes(b.name.toLowerCase())) ||
                                             {};
                                         const gradient = card.gradient || bankPreset.gradient || 'linear-gradient(135deg, #64748b 0%, #475569 100%)';
+
+                                        // Calculate pending amount for this card
+                                        const pendingAmount = transactions
+                                            .filter(t => t.cardId === card.id && t.status === 'pending')
+                                            .reduce((acc, t) => acc + Number(t.amount), 0);
+
                                         return (
                                             <div key={card.id} className="relative rounded-2xl p-5 shadow-lg transform transition-transform hover:scale-[1.02]" style={{ background: gradient, color: card.text || bankPreset.text || 'white' }}>
                                                 <div className="flex justify-between items-start mb-6">
@@ -432,8 +468,11 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
                                                 </div>
                                                 <div className="flex justify-between items-end">
                                                     <div>
-                                                        <div className="text-[10px] uppercase opacity-80">Fatura Atual</div>
-                                                        <div className="text-xl font-bold">{formatMoney(cardInvoices[card.id] || 0)}</div>
+                                                        <div className="text-[10px] uppercase opacity-80 mb-1">Fatura Aberta</div>
+                                                        <div className="text-xl font-bold flex items-center gap-2">
+                                                            {formatMoney(pendingAmount)}
+                                                            {pendingAmount === 0 && <Check size={16} className="text-emerald-300" />}
+                                                        </div>
                                                     </div>
                                                     <div className="text-right">
                                                         <div className="text-[10px] uppercase opacity-80">FECHA</div>
@@ -513,7 +552,8 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
                     <div>
                         <h1 className="font-extrabold text-lg text-white tracking-tight leading-tight">Gastinhos</h1>
                         <div className="flex flex-col">
-                            <span className="text-xs font-semibold text-slate-400" style={{ color: currentLevel.color }}>{currentLevel.name}</span>
+                            <span className="text-xs font-semibold text-slate-400 mb-1">Olá, {userName || 'Usuário'}</span>
+                            <span className="text-[10px] font-semibold text-slate-500" style={{ color: currentLevel.color }}>{currentLevel.name}</span>
                             <div className="w-24 h-1.5 bg-slate-800 rounded-full mt-1 overflow-hidden">
                                 <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: currentLevel.color }}></div>
                             </div>
@@ -524,11 +564,17 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
                 <nav className="flex-1 space-y-2">
                     <MenuItem icon={<LayoutDashboard size={20} />} label="Visão Geral" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
                     <MenuItem icon={<Wallet size={20} />} label="Lançamentos" active={activeTab === 'transactions'} onClick={() => setActiveTab('transactions')} />
+                    <MenuItem icon={<Zap size={20} />} label="Assinaturas" active={activeTab === 'subscriptions'} onClick={() => setActiveTab('subscriptions')} />
                     <MenuItem icon={<CalendarIcon size={20} />} label="Calendário" active={activeTab === 'calendar'} onClick={() => setActiveTab('calendar')} />
                     <MenuItem icon={<PieChart size={20} />} label="Relatórios" active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} />
                 </nav>
 
-                <div className="mt-auto pt-6 border-t border-slate-800">
+                <div className="mt-auto pt-6 border-t border-slate-800 space-y-2">
+                    <button onClick={() => setIsSettingsModalOpen(true)} className="w-full py-3 flex items-center gap-3 px-5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                        <Settings size={20} />
+                        <span className="font-medium">Configurações</span>
+                    </button>
+
                     <div className="grid grid-cols-2 gap-2 mb-4">
                         <button onClick={handleBackup} className="py-2 flex items-center justify-center gap-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-medium transition-colors">
                             <Save size={14} /> Backup
@@ -558,7 +604,8 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
                         <h2 className="text-2xl font-bold text-white">{format(currentDate, 'MMMM yyyy', { locale: ptBR })}</h2>
                     </div>
                     <div className="flex gap-4">
-                        <button onClick={exportPDF} className="p-3 text-slate-400 hover:text-white bg-slate-800 rounded-xl border border-slate-700 hover:border-violet-500 transition-colors" title="Baixar Relatório PDF"><Download size={20} /></button>                        <button onClick={() => setIsTxModalOpen(true)} className="flex items-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl shadow-lg shadow-violet-600/20 active:scale-95 transition-all">
+                        <button onClick={exportPDF} className="p-3 text-slate-400 hover:text-white bg-slate-800 rounded-xl border border-slate-700 hover:border-violet-500 transition-colors" title="Baixar Relatório PDF"><Download size={20} /></button>
+                        <button onClick={() => setIsTxModalOpen(true)} className="flex items-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl shadow-lg shadow-violet-600/20 active:scale-95 transition-all">
                             <Plus size={20} /> Nova Transação
                         </button>
                     </div>
@@ -567,10 +614,10 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
                 <div className="flex-1 overflow-hidden p-8">
                     {activeTab === 'dashboard' && (
                         <div className="grid grid-cols-4 gap-6 mb-8">
-                            <StatCard label="Saldo Total" value={balance} icon={<Wallet />} color="#8b5cf6" sub="Disponível" />
-                            <StatCard label="Receita" value={income} icon={<ArrowUpRight />} color="#10b981" sub="Mensal" />
-                            <StatCard label="Despesa" value={expenses} icon={<ArrowDownRight />} color="#ef4444" sub="Mensal" />
-                            <StatCard label="Economia" value={income - expenses} icon={<DollarSign />} color="#3b82f6" sub="Reserva" />
+                            <StatCard label="Saldo Total" value={balance} icon={<Wallet />} color="#8b5cf6" sub="Disponível" isPrivacyMode={isPrivacyMode} />
+                            <StatCard label="Receita" value={income} icon={<ArrowUpRight />} color="#10b981" sub="Mensal" isPrivacyMode={isPrivacyMode} />
+                            <StatCard label="Despesa" value={expenses} icon={<ArrowDownRight />} color="#ef4444" sub="Mensal" isPrivacyMode={isPrivacyMode} />
+                            <StatCard label="Economia" value={income - expenses} icon={<DollarSign />} color="#3b82f6" sub="Reserva" isPrivacyMode={isPrivacyMode} />
                         </div>
                     )}
                     {renderContent()}
@@ -579,6 +626,9 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
 
             {isTxModalOpen && <DesktopTransactionModal onClose={() => setIsTxModalOpen(false)} onSave={t => { setTransactions([t, ...transactions]); setIsTxModalOpen(false) }} categories={CATEGORIES} cards={cards} />}
             {isCardModalOpen && <AddCardModal onClose={() => setIsCardModalOpen(false)} onSave={c => { addCard(c); setIsCardModalOpen(false) }} />}
+            {isSubModalOpen && <SubscriptionModal onClose={() => setIsSubModalOpen(false)} onSave={t => { setTransactions([t, ...transactions]); setIsSubModalOpen(false) }} categories={CATEGORIES} cards={cards} />}
+            {isSettingsModalOpen && <SettingsModal onClose={() => setIsSettingsModalOpen(false)} userName={userName} setUserName={setUserName} />}
+            <SmartTips transactions={transactions} income={income} expenses={expenses} balance={balance} />
         </div>
     );
 }
