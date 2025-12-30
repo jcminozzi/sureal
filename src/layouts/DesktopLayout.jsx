@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     LayoutDashboard, Wallet, PieChart, Calendar as CalendarIcon, Settings,
     Plus, Search, Bell, TrendingUp, TrendingDown, DollarSign,
     ArrowUpRight, ArrowDownRight, CreditCard, Trash2, X, Check, Download, ChevronLeft, ChevronRight, Repeat,
-    Eye, EyeOff, Upload, Save, Zap, User
+    Eye, EyeOff, Upload, Save, Zap, User, Mic, Camera, Loader2
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, getDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -14,6 +14,10 @@ import { calculateLevel } from '../utils/gamification';
 import { SmartTips } from '../components/SmartTips';
 import { SubscriptionModal } from '../components/SubscriptionModal';
 import { SettingsModal } from '../components/SettingsModal';
+import { usePWAInstall } from '../hooks/usePWAInstall';
+import { useVoiceInput } from '../hooks/useVoiceInput';
+import { parseVoiceCommand } from '../utils/voiceParser';
+import { useOCR } from '../hooks/useOCR';
 
 function DesktopTransactionModal({ onClose, onSave, categories, cards }) {
     const [amount, setAmount] = useState('');
@@ -23,6 +27,32 @@ function DesktopTransactionModal({ onClose, onSave, categories, cards }) {
     const [selectedCardId, setSelectedCardId] = useState('');
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [isRecurring, setIsRecurring] = useState(false);
+
+    const { isListening, transcript, startListening, stopListening, isSupported } = useVoiceInput();
+    const { processImage, isProcessing, progress } = useOCR();
+
+    useEffect(() => {
+        if (transcript) {
+            const { type: newType, amount: newAmount, category: newCategory, description: newDesc } = parseVoiceCommand(transcript);
+
+            if (newType) setType(newType);
+            if (newAmount) setAmount(newAmount.toFixed(2).replace('.', ','));
+            if (newCategory) setSelectedCategory(newCategory);
+            if (newDesc) setDescription(newDesc);
+        }
+    }, [transcript]);
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const data = await processImage(file);
+            if (data) {
+                if (data.amount) setAmount(data.amount.toFixed(2).replace('.', ','));
+                if (data.category) setSelectedCategory(data.category);
+                if (data.description) setDescription(data.description);
+            }
+        }
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -50,6 +80,25 @@ function DesktopTransactionModal({ onClose, onSave, categories, cards }) {
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold text-white">Nova Transação</h2>
                     <button onClick={onClose} className="text-slate-400 hover:text-white"><X /></button>
+                </div>
+
+                {/* Smart Input Buttons */}
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                    {isSupported && (
+                        <button
+                            onClick={isListening ? stopListening : startListening}
+                            className={`py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-sm ${isListening ? 'bg-red-500/20 text-red-400 border border-red-500 animate-pulse' : 'bg-violet-600/10 text-violet-400 border border-violet-500/30 hover:bg-violet-600/20'}`}
+                        >
+                            <Mic size={18} className={isListening ? 'animate-bounce' : ''} />
+                            {isListening ? 'Ouvindo...' : 'Voz'}
+                        </button>
+                    )}
+
+                    <label className={`py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-sm cursor-pointer ${isProcessing ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20'}`}>
+                        {isProcessing ? <Loader2 size={18} className="animate-spin" /> : <Camera size={18} />}
+                        {isProcessing ? `${progress}%` : 'Foto / Scan'}
+                        <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isProcessing} />
+                    </label>
                 </div>
 
                 <div className="flex gap-3 mb-6">
@@ -255,6 +304,7 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
     const [isSubModalOpen, setIsSubModalOpen] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [isPrivacyMode, setIsPrivacyMode] = useState(false);
+    const { isInstallable, install } = usePWAInstall();
 
     const formatMoney = (v) => isPrivacyMode ? '****' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
     const healthScore = income > 0 ? Math.min(100, Math.round(((income - expenses) / income) * 100)) : 0;
@@ -476,7 +526,7 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
                                                     </div>
                                                     <div className="text-right">
                                                         <div className="text-[10px] uppercase opacity-80">FECHA</div>
-                                                        <div className="text-lg font-semibold">{card.dueDay}</div>
+                                                        <div className="text-lg font-semibold">{dueDay || 'DD'}</div>
                                                     </div>
                                                 </div>
                                                 <button onClick={() => { if (confirm('Remover?')) deleteCard(card.id) }} className="absolute top-3 right-3 opacity-0 hover:opacity-100 text-white/50 hover:text-white transition-opacity"><Trash2 size={14} /></button>
@@ -570,6 +620,13 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
                 </nav>
 
                 <div className="mt-auto pt-6 border-t border-slate-800 space-y-2">
+                    {isInstallable && (
+                        <button onClick={install} className="w-full py-3 flex items-center gap-3 px-5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white transition-all shadow-lg shadow-violet-600/20 mb-2">
+                            <Download size={20} />
+                            <span className="font-medium">Instalar App</span>
+                        </button>
+                    )}
+
                     <button onClick={() => setIsSettingsModalOpen(true)} className="w-full py-3 flex items-center gap-3 px-5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
                         <Settings size={20} />
                         <span className="font-medium">Configurações</span>

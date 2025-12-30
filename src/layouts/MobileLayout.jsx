@@ -1,10 +1,9 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
     Plus, TrendingUp, TrendingDown, Wallet, Calendar,
     MoreHorizontal, ChevronLeft, ChevronRight, X, Trash2,
     Check, CreditCard, PieChart, Search, Repeat,
-    Eye, EyeOff, Target, Settings
+    Eye, EyeOff, Target, Settings, Mic, Camera, Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -14,6 +13,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { SmartTips } from '../components/SmartTips';
 import { SettingsModal } from '../components/SettingsModal';
+import { useVoiceInput } from '../hooks/useVoiceInput';
+import { parseVoiceCommand } from '../utils/voiceParser';
+import { useOCR } from '../hooks/useOCR';
 
 export const CATEGORIES = [
     { id: 'market', icon: '🛒', label: 'Mercado', color: '#f59e0b' },
@@ -38,6 +40,32 @@ function TransactionForm({ onClose, onSave, categories, cards }) {
     const [isInstallment, setIsInstallment] = useState(false);
     const [installmentsCount, setInstallmentsCount] = useState(2);
     const [isRecurring, setIsRecurring] = useState(false);
+
+    const { isListening, transcript, startListening, stopListening, isSupported } = useVoiceInput();
+    const { processImage, isProcessing, progress } = useOCR();
+
+    useEffect(() => {
+        if (transcript) {
+            const { type: newType, amount: newAmount, category: newCategory, description: newDesc } = parseVoiceCommand(transcript);
+
+            if (newType) setType(newType);
+            if (newAmount) setAmount(newAmount.toFixed(2).replace('.', ','));
+            if (newCategory) setSelectedCategory(newCategory);
+            if (newDesc) setDescription(newDesc);
+        }
+    }, [transcript]);
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const data = await processImage(file);
+            if (data) {
+                if (data.amount) setAmount(data.amount.toFixed(2).replace('.', ','));
+                if (data.category) setSelectedCategory(data.category);
+                if (data.description) setDescription(data.description);
+            }
+        }
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -75,16 +103,35 @@ function TransactionForm({ onClose, onSave, categories, cards }) {
                     </button>
                 </div>
 
+                {/* Smart Input Buttons */}
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                    {isSupported && (
+                        <button
+                            onClick={isListening ? stopListening : startListening}
+                            className={`py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-sm ${isListening ? 'bg-red-500/20 text-red-400 border border-red-500 animate-pulse' : 'bg-violet-600/10 text-violet-400 border border-violet-500/30 hover:bg-violet-600/20'}`}
+                        >
+                            <Mic size={18} className={isListening ? 'animate-bounce' : ''} />
+                            {isListening ? 'Ouvindo...' : 'Voz'}
+                        </button>
+                    )}
+
+                    <label className={`py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-sm cursor-pointer ${isProcessing ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20'}`}>
+                        {isProcessing ? <Loader2 size={18} className="animate-spin" /> : <Camera size={18} />}
+                        {isProcessing ? `${progress}%` : 'Foto / Scan'}
+                        <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isProcessing} />
+                    </label>
+                </div>
+
                 <div className="flex gap-3 mb-6">
                     <button
                         onClick={() => setType('income')}
-                        className={`flex - 1 py - 4 rounded - xl font - bold flex items - center justify - center gap - 2 transition - all ${type === 'income' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50' : 'bg-slate-700/50 text-slate-400'} `}
+                        className={`flex-1 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${type === 'income' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50' : 'bg-slate-700/50 text-slate-400'} `}
                     >
                         <TrendingUp size={20} /> Receita
                     </button>
                     <button
                         onClick={() => setType('expense')}
-                        className={`flex - 1 py - 4 rounded - xl font - bold flex items - center justify - center gap - 2 transition - all ${type === 'expense' ? 'bg-red-500/20 text-red-400 border border-red-500/50' : 'bg-slate-700/50 text-slate-400'} `}
+                        className={`flex-1 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${type === 'expense' ? 'bg-red-500/20 text-red-400 border border-red-500/50' : 'bg-slate-700/50 text-slate-400'} `}
                     >
                         <TrendingDown size={20} /> Despesa
                     </button>
@@ -104,8 +151,8 @@ function TransactionForm({ onClose, onSave, categories, cards }) {
                 {type === 'expense' && (
                     <div className="space-y-4 mb-6">
                         <div className="flex gap-2">
-                            <button onClick={() => setPaymentMethod('debit')} className={`flex - 1 py - 2 rounded - lg text - sm font - semibold transition - colors ${paymentMethod === 'debit' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-400'} `}>Débito</button>
-                            <button onClick={() => setPaymentMethod('credit')} className={`flex - 1 py - 2 rounded - lg text - sm font - semibold transition - colors ${paymentMethod === 'credit' ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-400'} `}>Crédito</button>
+                            <button onClick={() => setPaymentMethod('debit')} className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${paymentMethod === 'debit' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-400'} `}>Débito</button>
+                            <button onClick={() => setPaymentMethod('credit')} className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${paymentMethod === 'credit' ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-400'} `}>Crédito</button>
                         </div>
                         {paymentMethod === 'credit' && (
                             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="bg-slate-900/50 p-4 rounded-xl border border-slate-700">
@@ -135,7 +182,7 @@ function TransactionForm({ onClose, onSave, categories, cards }) {
                     <label className="block text-sm text-slate-400 mb-2">Categoria</label>
                     <div className="grid grid-cols-5 gap-2">
                         {categories.map(cat => (
-                            <button key={cat.id} onClick={() => setSelectedCategory(cat)} className={`flex flex - col items - center justify - center p - 2 rounded - xl transition - all ${selectedCategory?.id === cat.id ? 'bg-violet-600 text-white scale-105' : 'bg-slate-700/30 text-slate-400 hover:bg-slate-700'} `}>
+                            <button key={cat.id} onClick={() => setSelectedCategory(cat)} className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${selectedCategory?.id === cat.id ? 'bg-violet-600 text-white scale-105' : 'bg-slate-700/30 text-slate-400 hover:bg-slate-700'} `}>
                                 <span className="text-2xl mb-1">{cat.icon}</span>
                                 <span className="text-[10px] font-medium truncate w-full text-center">{cat.label}</span>
                             </button>

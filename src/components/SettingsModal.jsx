@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { X, Save, User } from 'lucide-react';
+import { X, Save, User, Download } from 'lucide-react';
+import { usePWAInstall } from '../hooks/usePWAInstall';
 
 export function SettingsModal({ onClose, userName, setUserName }) {
     const [name, setName] = useState(userName);
+    const { isInstallable, install } = usePWAInstall();
 
     const handleSave = () => {
         if (name.trim()) {
@@ -37,14 +39,26 @@ export function SettingsModal({ onClose, userName, setUserName }) {
                     />
                 </div>
 
-                <button
-                    onClick={handleSave}
-                    disabled={!name.trim()}
-                    className="w-full py-3 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl shadow-lg shadow-violet-600/20 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                    <Save size={20} />
-                    Salvar Alterações
-                </button>
+                <div className="space-y-3">
+                    <button
+                        onClick={handleSave}
+                        disabled={!name.trim()}
+                        className="w-full py-3 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl shadow-lg shadow-violet-600/20 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        <Save size={20} />
+                        Salvar Alterações
+                    </button>
+
+                    {isInstallable && (
+                        <button
+                            onClick={install}
+                            className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl border border-slate-600 active:scale-95 transition-all flex items-center justify-center gap-2"
+                        >
+                            <Download size={20} />
+                            Instalar App
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );
