@@ -5,7 +5,7 @@ import {
     Check, CreditCard, PieChart, Search
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { BANCOS } from '../constants/bancos'; // Assuming BANKS/BANCOS are consistent, verify if BANKS is used
+import { BANKS } from '../constants/banks';
 
 // Since we are migrating, let's assume BANKS import is needed or use the prop passed down if available
 // Checking previous code, Desktop used BANKS from '../constants/banks'. Mobile might need it too or pass logic.
