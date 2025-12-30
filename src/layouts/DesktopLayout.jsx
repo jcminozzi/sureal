@@ -353,10 +353,13 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
                                     {cards.length === 0 && <div className="text-center py-10 text-slate-500 text-sm border-2 border-dashed border-slate-700 rounded-xl">Nenhum cartão. Adicione um!</div>}
 
                                     {cards.map(card => {
-                                        const bankPreset = BANKS.find(b => b.id === card.bankId) || {};
+                                        const bankPreset = BANKS.find(b => b.id === card.bankId) ||
+                                            BANKS.find(b => b.name === card.bankName) ||
+                                            BANKS.find(b => card.bankName && card.bankName.toLowerCase().includes(b.name.toLowerCase())) ||
+                                            {};
                                         const gradient = card.gradient || bankPreset.gradient || 'linear-gradient(135deg, #64748b 0%, #475569 100%)';
                                         return (
-                                            <div key={card.id} className="relative rounded-2xl p-5 shadow-lg transform transition-transform hover:scale-[1.02]" style={{ background: gradient, color: card.text || 'white' }}>
+                                            <div key={card.id} className="relative rounded-2xl p-5 shadow-lg transform transition-transform hover:scale-[1.02]" style={{ background: gradient, color: card.text || bankPreset.text || 'white' }}>
                                                 <div className="flex justify-between items-start mb-6">
                                                     <div>
                                                         <div className="font-bold text-lg tracking-wide">{card.bankName}</div>
