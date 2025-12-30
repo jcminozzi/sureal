@@ -232,7 +232,54 @@ function AddCardModal({ onClose, onSave }) {
     );
 }
 
-function CalendarView({ transactions, currentDate }) {
+function DayDetailsModal({ date, transactions, onClose, onDelete }) {
+    const income = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + Number(t.amount), 0);
+    const expense = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + Number(t.amount), 0);
+
+    return (
+        <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center">
+            <div className="bg-slate-800 w-[400px] max-h-[80vh] flex flex-col rounded-2xl shadow-2xl border border-slate-700 animate-in fade-in zoom-in-95">
+                <div className="p-6 border-b border-slate-700 flex justify-between items-center">
+                    <div>
+                        <h2 className="text-xl font-bold text-white">{format(date, "d 'de' MMMM", { locale: ptBR })}</h2>
+                        <div className="text-xs text-slate-400 mt-1 flex gap-3">
+                            <span className="text-emerald-400">Receita: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(income)}</span>
+                            <span className="text-red-400">Despesa: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(expense)}</span>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={20} /></button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-3">
+                    {transactions.length === 0 ? (
+                        <div className="text-center text-slate-500 py-8">Nenhuma transação neste dia.</div>
+                    ) : (
+                        transactions.map(t => (
+                            <div key={t.id} className="bg-slate-700/30 p-3 rounded-xl border border-slate-700/50 flex items-center justify-between group">
+                                <div className="flex items-center gap-3">
+                                    <div className="text-xl">{t.categoryIcon}</div>
+                                    <div>
+                                        <div className="font-medium text-white text-sm">{t.description}</div>
+                                        <div className="text-[10px] text-slate-400">{t.categoryLabel} • {t.type === 'income' ? 'Receita' : 'Despesa'}</div>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className={`font-bold text-sm ${t.type === 'income' ? 'text-emerald-400' : 'text-white'}`}>
+                                        {t.type === 'income' ? '+' : '-'} {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.amount)}
+                                    </div>
+                                    <button onClick={() => onDelete(t.id)} className="text-red-400 text-[10px] hover:underline opacity-0 group-hover:opacity-100 transition-opacity">Excluir</button>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function CalendarView({ transactions, currentDate, cards, setTransactions }) {
+    const [selectedDay, setSelectedDay] = useState(null);
     const start = startOfMonth(currentDate);
     const end = endOfMonth(currentDate);
     const days = eachDayOfInterval({ start, end });
@@ -240,34 +287,71 @@ function CalendarView({ transactions, currentDate }) {
     const startDay = getDay(start);
     const padding = Array(startDay).fill(null);
 
+    // Filter transactions for the current month to optimize
+    const monthTransactions = transactions.filter(t => {
+        const d = new Date(t.date);
+        return d.getMonth() === currentDate.getMonth() && d.getFullYear() === currentDate.getFullYear();
+    });
+
     return (
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8 h-full flex flex-col overflow-hidden">
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8 h-full flex flex-col overflow-hidden relative">
             <h2 className="text-2xl font-bold mb-6">Calendário de Atividades</h2>
 
             <div className="grid grid-cols-7 gap-4 mb-4">
                 {weekDays.map(d => <div key={d} className="text-center text-slate-500 font-semibold text-sm">{d}</div>)}
             </div>
 
-            <div className="grid grid-cols-7 gap-4 overflow-y-auto pr-2 custom-scrollbar">
+            <div className="grid grid-cols-7 gap-4 overflow-y-auto pr-2 custom-scrollbar flex-1 content-start">
                 {padding.map((_, i) => <div key={`pad-${i}`}></div>)}
                 {days.map(day => {
-                    const dayTx = transactions.filter(t => isSameDay(new Date(t.date), day));
-                    const hasIncome = dayTx.some(t => t.type === 'income');
-                    const hasExpense = dayTx.some(t => t.type === 'expense');
+                    const dayTx = monthTransactions.filter(t => isSameDay(new Date(t.date), day));
+                    const dayIncome = dayTx.filter(t => t.type === 'income').reduce((acc, t) => acc + Number(t.amount), 0);
+                    const dayExpense = dayTx.filter(t => t.type === 'expense').reduce((acc, t) => acc + Number(t.amount), 0);
                     const isToday = isSameDay(day, new Date());
 
+                    // Check for Card Invoices closing on this day
+                    const closingCards = cards.filter(c => c.dueDay && parseInt(c.dueDay) === day.getDate());
+
+                    // Check for Subscriptions (recurring transactions on this day)
+                    // Note: This is a simplification. Ideally we check the 'installment' or specific recurring logic.
+                    // For now, we assume if it's in the transaction list, it's valid. 
+                    // To show *upcoming* subscriptions that haven't been launched yet would require more complex logic.
+                    // Here we just highlight if there are actual subscription transactions launched for this day.
+                    const hasSubscription = dayTx.some(t => t.recurring || t.isSubscription);
+
                     return (
-                        <div key={day.toString()}
-                            className={`aspect-square rounded-xl p-2 flex flex-col justify-between cursor-pointer transition-all hover:bg-slate-700 ${isToday ? 'bg-violet-600/10 border border-violet-500' : 'bg-slate-800/50 border border-slate-700/30'}`}>
-                            <span className={`text-sm ${isToday ? 'text-violet-400 font-bold' : 'text-slate-400'}`}>{format(day, 'd')}</span>
-                            <div className="flex justify-end gap-1">
-                                {hasIncome && <div className="w-2 h-2 rounded-full bg-emerald-500"></div>}
-                                {hasExpense && <div className="w-2 h-2 rounded-full bg-red-500"></div>}
+                        <div key={day.toString()} onClick={() => setSelectedDay(day)}
+                            className={`aspect-square rounded-xl p-2 flex flex-col justify-between cursor-pointer transition-all hover:bg-slate-700 hover:scale-[1.02] border ${isToday ? 'bg-violet-600/10 border-violet-500' : 'bg-slate-800/50 border-slate-700/30'}`}>
+                            <div className="flex justify-between items-start">
+                                <span className={`text-sm ${isToday ? 'text-violet-400 font-bold' : 'text-slate-400'}`}>{format(day, 'd')}</span>
+                                <div className="flex gap-1">
+                                    {closingCards.length > 0 && <CreditCard size={12} className="text-amber-400" />}
+                                    {hasSubscription && <Zap size={12} className="text-yellow-400" />}
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col gap-0.5 items-end">
+                                {dayIncome > 0 && <span className="text-[10px] text-emerald-400 font-bold">+{Math.round(dayIncome)}</span>}
+                                {dayExpense > 0 && <span className="text-[10px] text-red-400 font-bold">-{Math.round(dayExpense)}</span>}
+                                {closingCards.length > 0 && <span className="text-[8px] text-amber-500 font-medium uppercase tracking-tighter">Fatura {closingCards[0].bankName}</span>}
                             </div>
                         </div>
                     );
                 })}
             </div>
+
+            {selectedDay && (
+                <DayDetailsModal
+                    date={selectedDay}
+                    transactions={monthTransactions.filter(t => isSameDay(new Date(t.date), selectedDay))}
+                    onClose={() => setSelectedDay(null)}
+                    onDelete={(id) => {
+                        if (confirm('Excluir esta transação?')) {
+                            setTransactions(prev => prev.filter(t => t.id !== id));
+                        }
+                    }}
+                />
+            )}
         </div>
     );
 }
@@ -410,7 +494,7 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
                         </div>
                     </div>
                 );
-            case 'calendar': return <CalendarView transactions={transactions} currentDate={currentDate} />;
+            case 'calendar': return <CalendarView transactions={transactions} currentDate={currentDate} cards={cards} setTransactions={setTransactions} />;
             case 'reports':
                 return (
                     <div className="flex flex-col items-center justify-center h-full text-slate-500 gap-4">
