@@ -9,12 +9,17 @@ const CARDS_STORAGE_KEY = 'expense_tracker_cards';
 export default function App() {
   // --- GLOBAL STATE ---
   const [transactions, setTransactions] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem('transactions');
     return saved ? JSON.parse(saved) : [];
   });
 
   const [cards, setCards] = useState(() => {
-    const saved = localStorage.getItem(CARDS_STORAGE_KEY);
+    const saved = localStorage.getItem('cards');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [goals, setGoals] = useState(() => {
+    const saved = localStorage.getItem('goals');
     return saved ? JSON.parse(saved) : [];
   });
 
@@ -22,10 +27,6 @@ export default function App() {
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1280);
 
   // --- PERSISTENCE ---
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
-  }, [transactions]);
-
   useEffect(() => {
     localStorage.setItem(CARDS_STORAGE_KEY, JSON.stringify(cards));
   }, [cards]);
@@ -131,7 +132,9 @@ export default function App() {
     payable,
     projectedBalance,
     categoryData,
-    monthlyTransactions
+    monthlyTransactions,
+    goals,
+    setGoals
   };
 
   return isDesktop ? (

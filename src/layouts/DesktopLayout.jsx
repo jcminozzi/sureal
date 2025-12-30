@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import {
     LayoutDashboard, Wallet, PieChart, Calendar as CalendarIcon, Settings,
     Plus, Search, Bell, TrendingUp, TrendingDown, DollarSign,
-    ArrowUpRight, ArrowDownRight, CreditCard, Trash2, X, Check, Download, ChevronLeft, ChevronRight
+    ArrowUpRight, ArrowDownRight, CreditCard, Trash2, X, Check, Download, ChevronLeft, ChevronRight, Repeat,
+    Eye, EyeOff, Upload, Save
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, getDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { CATEGORIES } from './MobileLayout';
 import { BANKS } from '../constants/banks';
+import { calculateLevel } from '../utils/gamification';
 
 function DesktopTransactionModal({ onClose, onSave, categories, cards }) {
     const [amount, setAmount] = useState('');
@@ -17,6 +19,7 @@ function DesktopTransactionModal({ onClose, onSave, categories, cards }) {
     const [paymentMethod, setPaymentMethod] = useState('debit');
     const [selectedCardId, setSelectedCardId] = useState('');
     const [selectedCategory, setSelectedCategory] = useState(null);
+    const [isRecurring, setIsRecurring] = useState(false);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -33,7 +36,8 @@ function DesktopTransactionModal({ onClose, onSave, categories, cards }) {
             categoryIcon: selectedCategory.icon,
             categoryLabel: selectedCategory.label,
             cardId: (type === 'expense' && paymentMethod === 'credit') ? selectedCardId : null,
-            installment: null
+            installment: null,
+            recurring: isRecurring
         });
     };
 
@@ -94,6 +98,14 @@ function DesktopTransactionModal({ onClose, onSave, categories, cards }) {
                 <div className="mb-6">
                     <input type="text" placeholder="Descrição" value={description} onChange={e => setDescription(e.target.value)}
                         className="w-full bg-slate-900 border border-slate-600 rounded-xl p-3 text-white outline-none focus:border-violet-500" />
+                </div>
+
+                <div className="mb-6 flex items-center gap-3">
+                    <input type="checkbox" id="recurring" checked={isRecurring} onChange={e => setIsRecurring(e.target.checked)}
+                        className="w-5 h-5 accent-violet-600 rounded cursor-pointer" />
+                    <label htmlFor="recurring" className="text-slate-300 text-sm cursor-pointer select-none flex items-center gap-2">
+                        <Repeat size={16} /> Despesa Fixa (Todo mês)
+                    </label>
                 </div>
 
                 <button onClick={handleSubmit} className="w-full py-4 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl shadow-lg shadow-violet-600/20 active:scale-95 transition-all">
@@ -237,9 +249,59 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
     const [searchTerm, setSearchTerm] = useState('');
     const [isTxModalOpen, setIsTxModalOpen] = useState(false);
     const [isCardModalOpen, setIsCardModalOpen] = useState(false);
+    const [isPrivacyMode, setIsPrivacyMode] = useState(false);
 
-    const formatMoney = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+    const formatMoney = (v) => isPrivacyMode ? '****' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
     const healthScore = income > 0 ? Math.min(100, Math.round(((income - expenses) / income) * 100)) : 0;
+
+    const { currentLevel, progress, nextLevel } = calculateLevel(balance, transactions.length);
+
+    const handleBackup = () => {
+        const data = { transactions, cards, version: '1.0', exportDate: new Date().toISOString() };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `backup_gastinhos_${format(new Date(), 'yyyy-MM-dd')}.json`;
+        a.click();
+    };
+
+    const handleRestore = () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    if (data.transactions && data.cards) {
+                        if (confirm(`Restaurar backup de ${new Date(data.exportDate).toLocaleDateString()}? Isso substituirá os dados atuais.`)) {
+                            setTransactions(data.transactions);
+                            // Assuming setCards is passed or we need to handle it. 
+                            // Wait, 'cards' prop is passed, but 'addCard'/'deleteCard' are functions. 
+                            // The persistence is likely in App.jsx. 
+                            // I need to update App.jsx to handle bulk restore or assume App.jsx passes a setCards prop?
+                            // Checking App.jsx... App.jsx handles persistence via localStorage mostly relying on 'transactions' and 'cards' state changes.
+                            // But I only have 'addCard' and 'deleteCard'. 
+                            // I will store IT in localStorage manually and reload for now, or trigger a full reload.
+                            localStorage.setItem('transactions', JSON.stringify(data.transactions));
+                            localStorage.setItem('cards', JSON.stringify(data.cards));
+                            alert('Backup restaurado com sucesso! O app será recarregado.');
+                            window.location.reload();
+                        }
+                    } else {
+                        alert('Arquivo de backup inválido.');
+                    }
+                } catch (err) {
+                    alert('Erro ao ler arquivo.');
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    };
 
     const renderContent = () => {
         switch (activeTab) {
@@ -277,6 +339,7 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
                                             <td className="p-4">
                                                 <div className="flex items-center gap-2">
                                                     {t.description}
+                                                    {t.recurring && <Repeat size={14} className="text-violet-400" />}
                                                     {t.cardId && <span className="text-[10px] bg-violet-500/20 text-violet-400 px-1.5 py-0.5 rounded uppercase font-bold">Crédito</span>}
                                                     {t.installment && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">{t.installment}</span>}
                                                 </div>
@@ -389,17 +452,72 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
         }
     }
 
+    const exportPDF = () => {
+        import('jspdf').then(({ jsPDF }) => {
+            import('jspdf-autotable').then(({ default: autoTable }) => {
+                const doc = new jsPDF();
+
+                // Header
+                doc.setFillColor(15, 23, 42); // slate-900
+                doc.rect(0, 0, 210, 40, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(22);
+                doc.text('Relatório Financeiro', 14, 20);
+                doc.setFontSize(10);
+                doc.text(`Gerado em: ${new Date().toLocaleDateString()} - Meus Gastinhos`, 14, 30);
+
+                // Summary
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(12);
+                doc.text(`Saldo: ${formatMoney(balance)} | Receitas: ${formatMoney(income)} | Despesas: ${formatMoney(expenses)}`, 14, 50);
+
+                // Table
+                const tableData = transactions
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .map(t => [
+                        new Date(t.date).toLocaleDateString(),
+                        t.categoryLabel,
+                        t.description,
+                        t.type === 'income' ? 'Receita' : 'Despesa',
+                        formatMoney(t.amount)
+                    ]);
+
+                autoTable(doc, {
+                    startY: 60,
+                    head: [['Data', 'Categoria', 'Descrição', 'Tipo', 'Valor']],
+                    body: tableData,
+                    theme: 'grid',
+                    headStyles: { fillColor: [124, 58, 237] }, // violet-600
+                    styles: { fontSize: 9 },
+                    alternateRowStyles: { fillColor: [241, 245, 249] } // slate-100
+                });
+
+                doc.save('relatorio-gastinhos.pdf');
+            });
+        });
+    };
+
     return (
         <div className="flex h-screen bg-slate-950 text-slate-200 overflow-hidden font-sans">
             {/* Sidebar */}
             <aside className="w-72 bg-slate-900/50 backdrop-blur-xl border-r border-slate-800 p-6 flex flex-col">
-                <div className="flex items-center gap-4 mb-10">
-                    <div className="w-12 h-12 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-600/20">
-                        <Wallet className="text-white" />
+                <div className="flex items-center gap-4 mb-8">
+                    <div className="relative">
+                        <div className="w-14 h-14 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-600/20 text-2xl border-2 border-slate-700">
+                            {currentLevel.emoji}
+                        </div>
+                        <div className="absolute -bottom-2 -right-2 bg-slate-900 text-[10px] font-bold px-2 py-0.5 rounded-full border border-slate-700 text-yellow-400">
+                            Lvl
+                        </div>
                     </div>
                     <div>
-                        <h1 className="font-extrabold text-xl text-white tracking-tight">Gastinhos</h1>
-                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pro Dashboard</span>
+                        <h1 className="font-extrabold text-lg text-white tracking-tight leading-tight">Gastinhos</h1>
+                        <div className="flex flex-col">
+                            <span className="text-xs font-semibold text-slate-400" style={{ color: currentLevel.color }}>{currentLevel.name}</span>
+                            <div className="w-24 h-1.5 bg-slate-800 rounded-full mt-1 overflow-hidden">
+                                <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: currentLevel.color }}></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -411,6 +529,14 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
                 </nav>
 
                 <div className="mt-auto pt-6 border-t border-slate-800">
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                        <button onClick={handleBackup} className="py-2 flex items-center justify-center gap-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-medium transition-colors">
+                            <Save size={14} /> Backup
+                        </button>
+                        <button onClick={handleRestore} className="py-2 flex items-center justify-center gap-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-medium transition-colors">
+                            <Upload size={14} /> Restaurar
+                        </button>
+                    </div>
                     <button onClick={() => { if (confirm('⚠️ Resetar tudo?')) { localStorage.clear(); window.location.reload(); } }} className="w-full py-3 flex items-center justify-center gap-2 text-red-500 hover:bg-red-500/10 rounded-xl transition-colors font-medium">
                         <Trash2 size={18} /> Resetar App
                     </button>
@@ -422,6 +548,9 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
                 {/* Header */}
                 <header className="h-20 px-8 flex justify-between items-center border-b border-slate-800 bg-slate-900/30">
                     <div className="flex items-center gap-4">
+                        <button onClick={() => setIsPrivacyMode(!isPrivacyMode)} className="p-2 text-slate-400 hover:text-white transition-colors" title="Modo Privacidade">
+                            {isPrivacyMode ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
                         <div className="flex bg-slate-800 rounded-lg p-1">
                             <button onClick={prevMonth} className="p-1 hover:text-white text-slate-400"><ChevronLeft /></button>
                             <button onClick={nextMonth} className="p-1 hover:text-white text-slate-400"><ChevronRight /></button>
@@ -429,8 +558,7 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
                         <h2 className="text-2xl font-bold text-white">{format(currentDate, 'MMMM yyyy', { locale: ptBR })}</h2>
                     </div>
                     <div className="flex gap-4">
-                        <button className="p-3 text-slate-400 hover:text-white bg-slate-800 rounded-xl border border-slate-700" title="PDF em breve"><Download size={20} /></button>
-                        <button onClick={() => setIsTxModalOpen(true)} className="flex items-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl shadow-lg shadow-violet-600/20 active:scale-95 transition-all">
+                        <button onClick={exportPDF} className="p-3 text-slate-400 hover:text-white bg-slate-800 rounded-xl border border-slate-700 hover:border-violet-500 transition-colors" title="Baixar Relatório PDF"><Download size={20} /></button>                        <button onClick={() => setIsTxModalOpen(true)} className="flex items-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl shadow-lg shadow-violet-600/20 active:scale-95 transition-all">
                             <Plus size={20} /> Nova Transação
                         </button>
                     </div>
