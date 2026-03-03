@@ -21,8 +21,7 @@ import { useOCR } from '../hooks/useOCR';
 import { UnifiedTransactionForm } from '../components/UnifiedTransactionForm';
 import { DayDetailsModal } from '../components/DayDetailsModal';
 import { AddCardModal } from '../components/AddCardModal';
-
-// Componente importado do UnifiedTransactionForm, AddCardModal e DayDetailsModal
+import { GastinhosInsights } from '../components/GastinhosInsights';
 
 function CalendarView({ transactions, currentDate, cards, setTransactions }) {
     const [selectedDay, setSelectedDay] = useState(null);
@@ -374,6 +373,10 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
                                     })}
                                 </div>
                             </div>
+
+                            <div className="h-[400px]">
+                                <GastinhosInsights transactions={transactions} currentDate={currentDate} income={income} expenses={expenses} />
+                            </div>
                         </div>
                     </div>
                 );
@@ -422,6 +425,28 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
 
                 doc.save('relatorio-gastinhos.pdf');
             });
+        });
+    };
+
+    const exportCSV = () => {
+        import('papaparse').then(({ default: Papa }) => {
+            const data = transactions.map(t => ({
+                Data: new Date(t.date).toLocaleDateString(),
+                Categoria: t.categoryLabel,
+                Descrição: t.description,
+                Tipo: t.type === 'income' ? 'Receita' : 'Despesa',
+                Valor: t.amount,
+                Status: t.status === 'paid' ? 'Pago' : 'Pendente'
+            }));
+            const csv = Papa.unparse(data);
+            const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `gastinhos_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         });
     };
 
@@ -499,6 +524,9 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
                         </button>
                     </div>
                     <div className="flex gap-4">
+                        <button onClick={exportCSV} className="p-4 text-slate-400 hover:text-white bg-slate-900/50 rounded-2xl border border-white/10 hover:border-emerald-500 hover:shadow-lg hover:shadow-emerald-500/20 transition-all group" title="Exportar CSV">
+                            <Upload size={20} className="group-hover:-translate-y-1 transition-transform" />
+                        </button>
                         <button onClick={exportPDF} className="p-4 text-slate-400 hover:text-white bg-slate-900/50 rounded-2xl border border-white/10 hover:border-violet-500 hover:shadow-lg hover:shadow-violet-500/20 transition-all group" title="Baixar Relatório PDF">
                             <Download size={20} className="group-hover:-translate-y-1 transition-transform" />
                         </button>

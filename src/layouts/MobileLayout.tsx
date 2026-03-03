@@ -18,11 +18,12 @@ import { parseVoiceCommand } from '../utils/voiceParser';
 import { useOCR } from '../hooks/useOCR';
 import { UnifiedTransactionForm } from '../components/UnifiedTransactionForm';
 import { CATEGORIES } from '../constants/categories';
+import { GastinhosInsights } from '../components/GastinhosInsights';
 
 export function MobileLayout({
     balance, income, expenses, transactions, setTransactions,
     nextMonth, prevMonth, currentDate, addCard, deleteCard, cards,
-    goals, setGoals, userName
+    goals, setGoals, userName, setUserName
 }) {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('home');
@@ -43,6 +44,28 @@ export function MobileLayout({
             return { name: key, value: catMap[key], color: cat?.color || '#94a3b8' };
         });
     }, [transactions]);
+
+    const exportCSV = () => {
+        import('papaparse').then(({ default: Papa }) => {
+            const data = transactions.map(t => ({
+                Data: new Date(t.date).toLocaleDateString(),
+                Categoria: t.categoryLabel,
+                Descrição: t.description,
+                Tipo: t.type === 'income' ? 'Receita' : 'Despesa',
+                Valor: t.amount,
+                Status: t.status === 'paid' ? 'Pago' : 'Pendente'
+            }));
+            const csv = Papa.unparse(data);
+            const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `gastinhos_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    };
 
     const renderContent = () => {
         if (activeTab === 'home') {
@@ -65,6 +88,10 @@ export function MobileLayout({
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    <div className="h-72">
+                        <GastinhosInsights transactions={transactions} currentDate={currentDate} income={income} expenses={expenses} />
                     </div>
 
                     <div>
@@ -241,6 +268,9 @@ export function MobileLayout({
                             <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">{currentLevel.name}</span>
                             <button onClick={() => setIsPrivacyMode(!isPrivacyMode)} className="text-slate-500 hover:text-white pb-0.5">
                                 {isPrivacyMode ? <EyeOff size={14} /> : <Eye size={14} />}
+                            </button>
+                            <button onClick={exportCSV} className="text-slate-500 hover:text-emerald-400 pb-0.5">
+                                <span className="font-bold text-[10px] tracking-tighter uppercase px-1 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">CSV</span>
                             </button>
                             <button onClick={() => setIsSettingsModalOpen(true)} className="text-slate-500 hover:text-white pb-0.5">
                                 <Settings size={14} />
