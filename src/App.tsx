@@ -12,6 +12,7 @@ function AppContent() {
     userName,
     setUserName,
     isDesktop,
+    setIsDesktop,
     monthlyTransactions,
     financialData,
     currentDate,
@@ -35,6 +36,12 @@ function AppContent() {
       setShowWelcome(true);
     }
   }, [userName]);
+
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth > 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [setIsDesktop]);
 
   const handleSaveName = (name) => {
     setUserName(name);

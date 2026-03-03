@@ -23,6 +23,8 @@ export interface AppState {
     userName: string;
     theme: 'light' | 'dark';
     isPrivacyMode: boolean;
+    currentDate: Date;
+    isDesktop: boolean;
 
     // Actions
     addTransaction: (tx: Transaction) => void;
@@ -41,6 +43,8 @@ export interface AppState {
     setUserName: (name: string) => void;
     setTheme: (theme: 'light' | 'dark') => void;
     setIsPrivacyMode: (isPrivacyMode: boolean) => void;
+    setCurrentDate: (date: Date | ((prev: Date) => Date)) => void;
+    setIsDesktop: (isDesktop: boolean) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -52,6 +56,8 @@ export const useStore = create<AppState>()(
             userName: 'Usuário',
             theme: 'dark',
             isPrivacyMode: false,
+            currentDate: new Date(),
+            isDesktop: window.innerWidth > 768,
 
             // Transactions
             addTransaction: (tx) => set((state) => ({ transactions: [...state.transactions, tx] })),
@@ -79,10 +85,22 @@ export const useStore = create<AppState>()(
             setUserName: (userName) => set({ userName }),
             setTheme: (theme) => set({ theme }),
             setIsPrivacyMode: (isPrivacyMode) => set({ isPrivacyMode }),
+            setCurrentDate: (updater) => set((state) => ({
+                currentDate: typeof updater === 'function' ? updater(state.currentDate) : updater
+            })),
+            setIsDesktop: (isDesktop) => set({ isDesktop }),
         }),
         {
             name: 'meusgastinhos-storage', // name of the item in the storage (must be unique)
             storage: createJSONStorage(() => idbStorage), // Use IndexedDB instead of localStorage
+            partialize: (state) => ({
+                transactions: state.transactions,
+                cards: state.cards,
+                goals: state.goals,
+                userName: state.userName,
+                theme: state.theme,
+                isPrivacyMode: state.isPrivacyMode
+            }),
         }
     )
 );
