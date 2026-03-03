@@ -14,4 +14,13 @@ export default defineConfig({
       ],
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'framer-motion', 'recharts', 'lucide-react', 'date-fns'],
+        },
+      },
+    },
+  },
 })

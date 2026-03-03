@@ -1,12 +1,18 @@
 export const BANKS = [
     { id: 'nubank', name: 'Nubank', color: '#820ad1', gradient: 'linear-gradient(135deg, #820ad1 0%, #400080 100%)', text: 'white' },
     { id: 'inter', name: 'Inter', color: '#ff7a00', gradient: 'linear-gradient(135deg, #ff7a00 0%, #ff5000 100%)', text: 'white' },
-    { id: 'bb', name: 'Banco do Brasil', color: '#fbf600', gradient: 'linear-gradient(135deg, #1d4f91 0%, #173d73 100%)', text: 'white', border: '#fbf600' }, // Azul com detalhe amarelo
+    { id: 'bb', name: 'Banco do Brasil', color: '#1d4f91', gradient: 'linear-gradient(135deg, #1d4f91 0%, #173d73 100%)', text: 'white', border: '#fbf600' },
     { id: 'santander', name: 'Santander', color: '#ec0000', gradient: 'linear-gradient(135deg, #ec0000 0%, #aa0000 100%)', text: 'white' },
     { id: 'neon', name: 'Neon', color: '#00ffff', gradient: 'linear-gradient(135deg, #00ffff 0%, #008080 100%)', text: '#0f172a' },
     { id: 'picpay', name: 'PicPay', color: '#11c76f', gradient: 'linear-gradient(135deg, #11c76f 0%, #0e8a4d 100%)', text: 'white' },
     { id: 'bradesco', name: 'Bradesco', color: '#cc092f', gradient: 'linear-gradient(135deg, #cc092f 0%, #990020 100%)', text: 'white' },
-    { id: 'next', name: 'Next', color: '#00ff5f', gradient: 'linear-gradient(135deg, #000000 0%, #222222 100%)', text: '#00ff5f', border: '#00ff5f' }, // Preto com verde
     { id: 'itaú', name: 'Itaú', color: '#ec7000', gradient: 'linear-gradient(135deg, #ec7000 0%, #b35500 100%)', text: 'white' },
-    { id: 'other', name: 'Outro', color: '#64748b', gradient: 'linear-gradient(135deg, #64748b 0%, #475569 100%)', text: 'white' },
+    { id: 'caixa', name: 'Caixa', color: '#003f87', gradient: 'linear-gradient(135deg, #003f87 0%, #002450 100%)', text: 'white' },
+    { id: 'hsbc', name: 'HSBC', color: '#eb001b', gradient: 'linear-gradient(135deg, #eb001b 0%, #b80011 100%)', text: 'white' },
+    { id: 'btg', name: 'BTG Pactual', color: '#fac858', gradient: 'linear-gradient(135deg, #fac858 0%, #d4a844 100%)', text: '#000000' },
+    { id: 'safra', name: 'Safra', color: '#005eb8', gradient: 'linear-gradient(135deg, #005eb8 0%, #003d82 100%)', text: 'white' },
+    { id: 'gympass', name: 'Ação', color: '#01d167', gradient: 'linear-gradient(135deg, #01d167 0%, #00a04f 100%)', text: 'white' },
+    { id: 'c6', name: 'C6 Bank', color: '#1c1c1c', gradient: 'linear-gradient(135deg, #1c1c1c 0%, #000000 100%)', text: 'white' },
+    { id: 'money', name: 'MoneyPlus', color: '#7b68ee', gradient: 'linear-gradient(135deg, #7b68ee 0%, #5a4bb8 100%)', text: 'white' },
+    { id: 'other', name: 'Outro Banco', color: '#64748b', gradient: 'linear-gradient(135deg, #64748b 0%, #475569 100%)', text: 'white' },
 ];
