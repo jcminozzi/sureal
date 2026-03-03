@@ -8,6 +8,7 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Inter', 'sans-serif'],
+                outfit: ['Outfit', 'sans-serif'],
             },
             colors: {
                 background: '#0f172a',

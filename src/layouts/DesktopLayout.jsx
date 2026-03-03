@@ -115,17 +115,17 @@ function MenuItem({ icon, label, active, onClick }) {
 function StatCard({ label, value, icon, color, sub, isPrivacyMode }) {
     const formatMoney = (v) => isPrivacyMode ? '****' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
     return (
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 p-6 rounded-2xl hover:scale-105 transition-transform cursor-default shadow-lg">
+        <div className="bg-slate-900/60 backdrop-blur-2xl border border-white/[0.08] p-6 rounded-3xl hover:scale-[1.02] transition-transform cursor-default shadow-2xl shadow-indigo-900/10">
             <div className="flex justify-between items-start mb-4">
-                <div style={{ color, backgroundColor: `${color}20` }} className="p-3 rounded-xl">
+                <div style={{ color, backgroundColor: `${color}20` }} className="p-3 rounded-2xl">
                     {icon}
                 </div>
             </div>
             <div>
-                <div className="text-3xl font-extrabold text-white mb-2 tracking-tight">{formatMoney(value)}</div>
-                <div className="flex justify-between items-center">
-                    <span className="text-slate-400 text-sm font-medium">{label}</span>
-                    <span style={{ color, backgroundColor: `${color}15` }} className="text-xs px-2 py-1 rounded-lg font-bold">{sub}</span>
+                <div className="text-4xl font-black text-white mb-2 tracking-tight font-outfit text-gradient">{formatMoney(value)}</div>
+                <div className="flex justify-between items-center mt-4">
+                    <span className="text-slate-400 text-sm font-medium uppercase tracking-wider">{label}</span>
+                    <span style={{ color, backgroundColor: `${color}15` }} className="text-[10px] px-2 py-1 rounded-lg font-bold uppercase">{sub}</span>
                 </div>
             </div>
         </div>
@@ -286,34 +286,34 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
                     <div className="grid grid-cols-[2fr_1fr] gap-8 h-full overflow-hidden">
                         <div className="flex flex-col gap-8 h-full overflow-y-auto pr-2 custom-scrollbar">
                             {/* Chart Area */}
-                            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-6 min-h-[300px]">
-                                <h3 className="font-bold text-lg mb-6 text-white">Fluxo Mensal</h3>
+                            <div className="glass p-8 min-h-[350px]">
+                                <h3 className="font-bold text-xl mb-8 text-white tracking-tight">Fluxo Mensal</h3>
                                 <div className="h-64">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={[{ name: 'Total', entrada: income, saida: expenses }]}>
                                             <XAxis dataKey="name" hide />
-                                            <Tooltip contentStyle={{ background: '#1e293b', border: 'none', borderRadius: 12, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.5)' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
-                                            <Bar dataKey="entrada" fill="#10b981" radius={[4, 4, 0, 0]} barSize={80} />
-                                            <Bar dataKey="saida" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={80} />
+                                            <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 16, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
+                                            <Bar dataKey="entrada" fill="#10b981" radius={[8, 8, 4, 4]} barSize={90} />
+                                            <Bar dataKey="saida" fill="#ef4444" radius={[8, 8, 4, 4]} barSize={90} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
                             </div>
 
                             {/* Recent Activity */}
-                            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-6">
-                                <h3 className="font-bold text-lg mb-4 text-white">Últimas Atividades</h3>
+                            <div className="glass p-8">
+                                <h3 className="font-bold text-xl mb-6 text-white tracking-tight">Últimas Atividades</h3>
                                 <div className="space-y-4">
                                     {transactions.slice(0, 5).map(t => (
-                                        <div key={t.id} className="flex justify-between items-center py-2 border-b border-slate-700/50 last:border-0">
+                                        <div key={t.id} className="flex justify-between items-center py-3 border-b border-white/[0.05] last:border-0 group hover:bg-slate-800/30 rounded-xl px-2 transition-colors -mx-2">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-xl bg-slate-700/50 flex items-center justify-center text-lg">{t.categoryIcon}</div>
+                                                <div className="w-12 h-12 rounded-2xl bg-slate-800/80 border border-white/5 flex items-center justify-center text-xl shadow-inner group-hover:scale-110 transition-transform">{t.categoryIcon}</div>
                                                 <div>
-                                                    <div className="font-medium text-white">{t.description}</div>
-                                                    <div className="text-xs text-slate-400">{new Date(t.date).toLocaleDateString()}</div>
+                                                    <div className="font-semibold text-white">{t.description}</div>
+                                                    <div className="text-sm text-slate-500">{new Date(t.date).toLocaleDateString()}</div>
                                                 </div>
                                             </div>
-                                            <div className={`font-bold ${t.type === 'income' ? 'text-emerald-400' : 'text-white'}`}>{formatMoney(t.amount)}</div>
+                                            <div className={`font-bold font-outfit text-lg ${t.type === 'income' ? 'text-emerald-400' : 'text-slate-200'}`}>{formatMoney(t.amount)}</div>
                                         </div>
                                     ))}
                                 </div>
@@ -322,10 +322,13 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
 
                         {/* Right Column (Cards) */}
                         <div className="flex flex-col gap-6">
-                            <div className="bg-gradient-to-b from-slate-800 to-slate-900 p-6 rounded-3xl border border-slate-700 h-full overflow-hidden flex flex-col">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h3 className="font-bold text-white">Meus Cartões</h3>
-                                    <button onClick={() => setIsCardModalOpen(true)} className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-white"><Plus size={18} /></button>
+                            <div className="bg-slate-900/60 backdrop-blur-2xl p-8 rounded-[2.5rem] border border-white/[0.08] shadow-2xl shadow-black/40 h-full overflow-hidden flex flex-col relative">
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-violet-600/10 blur-[80px] rounded-full -mr-20 -mt-20"></div>
+                                <div className="absolute bottom-0 left-0 w-64 h-64 bg-slate-600/10 blur-[80px] rounded-full -ml-20 -mb-20"></div>
+
+                                <div className="flex justify-between items-center mb-8 relative z-10">
+                                    <h3 className="font-bold text-xl text-white tracking-tight">Meus Cartões</h3>
+                                    <button onClick={() => setIsCardModalOpen(true)} className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all text-white hover:scale-105 active:scale-95"><Plus size={18} /></button>
                                 </div>
 
                                 <div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar">
@@ -423,26 +426,25 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
     };
 
     return (
-        <div className="flex h-screen bg-slate-950 text-slate-200 overflow-hidden font-sans">
+        <div className="flex h-screen bg-[#0b0f19] text-slate-200 overflow-hidden font-sans selection:bg-violet-500/30">
             {/* Sidebar */}
-            <aside className="w-72 bg-slate-900/50 backdrop-blur-xl border-r border-slate-800 p-6 flex flex-col">
-                <div className="flex items-center gap-4 mb-8">
+            <aside className="w-72 bg-slate-900/40 backdrop-blur-3xl border-r border-white/[0.05] p-6 flex flex-col relative overflow-hidden">
+                {/* Glow effect sidebar */}
+                <div className="absolute top-0 left-0 w-full h-64 bg-violet-600/10 blur-[100px] -z-10"></div>
+
+                <div className="flex items-center gap-4 mb-10 mt-2">
                     <div className="relative">
-                        <div className="w-14 h-14 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-600/20 text-2xl border-2 border-slate-700">
+                        <div className="w-14 h-14 bg-gradient-to-tr from-violet-600 to-indigo-500 rounded-2xl flex items-center justify-center shadow-xl shadow-violet-600/30 text-2xl border border-white/10">
                             {currentLevel.emoji}
                         </div>
-                        <div className="absolute -bottom-2 -right-2 bg-slate-900 text-[10px] font-bold px-2 py-0.5 rounded-full border border-slate-700 text-yellow-400">
+                        <div className="absolute -bottom-2 -right-2 bg-slate-900 text-[10px] font-bold px-2 py-0.5 rounded-lg border border-slate-700 text-yellow-400">
                             Lvl
                         </div>
                     </div>
                     <div>
-                        <h1 className="font-extrabold text-lg text-white tracking-tight leading-tight">Gastinhos</h1>
-                        <div className="flex flex-col">
-                            <span className="text-xs font-semibold text-slate-400 mb-1">Olá, {userName || 'Usuário'}</span>
-                            <span className="text-[10px] font-semibold text-slate-500" style={{ color: currentLevel.color }}>{currentLevel.name}</span>
-                            <div className="w-24 h-1.5 bg-slate-800 rounded-full mt-1 overflow-hidden">
-                                <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%`, backgroundColor: currentLevel.color }}></div>
-                            </div>
+                        <h1 className="font-black text-2xl tracking-tight leading-none text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 font-outfit">Gastinhos</h1>
+                        <div className="flex flex-col mt-1">
+                            <span className="text-xs font-medium text-slate-500">Olá, <span className="text-slate-300">{userName || 'Usuário'}</span></span>
                         </div>
                     </div>
                 </div>
@@ -457,54 +459,56 @@ export function DesktopLayout({ transactions, setTransactions, cards, addCard, d
 
                 <div className="mt-auto pt-6 border-t border-slate-800 space-y-2">
                     {isInstallable && (
-                        <button onClick={install} className="w-full py-3 flex items-center gap-3 px-5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white transition-all shadow-lg shadow-violet-600/20 mb-2">
-                            <Download size={20} />
-                            <span className="font-medium">Instalar App</span>
+                        <button onClick={install} className="w-full py-4 flex items-center gap-3 px-5 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-500 hover:from-violet-500 hover:to-indigo-400 text-white transition-all shadow-lg shadow-violet-600/20 mb-2 active:scale-95 group">
+                            <Download size={20} className="group-hover:animate-bounce" />
+                            <span className="font-bold">Instalar App</span>
                         </button>
                     )}
 
-                    <button onClick={() => setIsSettingsModalOpen(true)} className="w-full py-3 flex items-center gap-3 px-5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <button onClick={() => setIsSettingsModalOpen(true)} className="w-full py-4 flex items-center gap-3 px-5 rounded-2xl text-slate-400 hover:bg-slate-800/80 hover:text-white border border-transparent hover:border-white/5 transition-all outline-none">
                         <Settings size={20} />
                         <span className="font-medium">Configurações</span>
                     </button>
 
-                    <div className="grid grid-cols-2 gap-2 mb-4">
-                        <button onClick={handleBackup} className="py-2 flex items-center justify-center gap-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-medium transition-colors">
+                    <div className="grid grid-cols-2 gap-3 mb-4 mt-2">
+                        <button onClick={handleBackup} className="py-3 flex items-center justify-center gap-2 text-slate-400 hover:text-white bg-slate-800/40 hover:bg-slate-700/60 border border-white/5 rounded-xl text-xs font-bold transition-all">
                             <Save size={14} /> Backup
                         </button>
-                        <button onClick={handleRestore} className="py-2 flex items-center justify-center gap-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-medium transition-colors">
+                        <button onClick={handleRestore} className="py-3 flex items-center justify-center gap-2 text-slate-400 hover:text-white bg-slate-800/40 hover:bg-slate-700/60 border border-white/5 rounded-xl text-xs font-bold transition-all">
                             <Upload size={14} /> Restaurar
                         </button>
                     </div>
-                    <button onClick={() => { if (confirm('⚠️ Resetar tudo?')) { localStorage.clear(); window.location.reload(); } }} className="w-full py-3 flex items-center justify-center gap-2 text-red-500 hover:bg-red-500/10 rounded-xl transition-colors font-medium">
-                        <Trash2 size={18} /> Resetar App
+                    <button onClick={() => { if (confirm('⚠️ Resetar tudo?')) { localStorage.clear(); window.location.reload(); } }} className="w-full py-3 mt-2 flex items-center justify-center gap-2 text-red-500/70 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors font-semibold text-sm">
+                        <Trash2 size={16} /> Resetar App
                     </button>
                 </div>
             </aside>
 
             {/* Main */}
             <main className="flex-1 flex flex-col overflow-hidden relative">
-                {/* Header */}
-                <header className="h-20 px-8 flex justify-between items-center border-b border-slate-800 bg-slate-900/30">
-                    <div className="flex items-center gap-4">
-                        <button onClick={() => setIsPrivacyMode(!isPrivacyMode)} className="p-2 text-slate-400 hover:text-white transition-colors" title="Modo Privacidade">
-                            {isPrivacyMode ? <EyeOff size={20} /> : <Eye size={20} />}
-                        </button>
-                        <div className="flex bg-slate-800 rounded-lg p-1">
-                            <button onClick={prevMonth} className="p-1 hover:text-white text-slate-400"><ChevronLeft /></button>
-                            <button onClick={nextMonth} className="p-1 hover:text-white text-slate-400"><ChevronRight /></button>
+                {/* Header Navbar */}
+                <header className="h-24 px-10 flex justify-between items-center border-b border-white/[0.02] bg-transparent relative z-20">
+                    <div className="flex items-center gap-6">
+                        <h2 className="text-3xl font-black text-white font-outfit tracking-tight capitalize">{format(currentDate, 'MMMM yyyy', { locale: ptBR })}</h2>
+                        <div className="flex bg-slate-900/80 border border-white/5 rounded-xl p-1 shadow-inner">
+                            <button onClick={prevMonth} className="px-3 py-1.5 hover:bg-slate-800 rounded-lg hover:text-white text-slate-400 transition-colors"><ChevronLeft size={18} /></button>
+                            <button onClick={nextMonth} className="px-3 py-1.5 hover:bg-slate-800 rounded-lg hover:text-white text-slate-400 transition-colors"><ChevronRight size={18} /></button>
                         </div>
-                        <h2 className="text-2xl font-bold text-white">{format(currentDate, 'MMMM yyyy', { locale: ptBR })}</h2>
+                        <button onClick={() => setIsPrivacyMode(!isPrivacyMode)} className="p-3 bg-slate-900/40 border border-white/5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors" title="Modo Privacidade">
+                            {isPrivacyMode ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
                     </div>
                     <div className="flex gap-4">
-                        <button onClick={exportPDF} className="p-3 text-slate-400 hover:text-white bg-slate-800 rounded-xl border border-slate-700 hover:border-violet-500 transition-colors" title="Baixar Relatório PDF"><Download size={20} /></button>
-                        <button onClick={() => setIsTxModalOpen(true)} className="flex items-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl shadow-lg shadow-violet-600/20 active:scale-95 transition-all">
-                            <Plus size={20} /> Nova Transação
+                        <button onClick={exportPDF} className="p-4 text-slate-400 hover:text-white bg-slate-900/50 rounded-2xl border border-white/10 hover:border-violet-500 hover:shadow-lg hover:shadow-violet-500/20 transition-all group" title="Baixar Relatório PDF">
+                            <Download size={20} className="group-hover:-translate-y-1 transition-transform" />
+                        </button>
+                        <button onClick={() => setIsTxModalOpen(true)} className="btn-primary flex items-center gap-2 text-base px-8">
+                            <Plus size={20} /> <span className="pt-0.5">Nova Transação</span>
                         </button>
                     </div>
                 </header>
 
-                <div className="flex-1 overflow-hidden p-8">
+                <div className="flex-1 overflow-hidden p-10 relative z-10">
                     {activeTab === 'dashboard' && (
                         <div className="grid grid-cols-4 gap-6 mb-8">
                             <StatCard label="Saldo Total" value={balance} icon={<Wallet />} color="#8b5cf6" sub="Disponível" isPrivacyMode={isPrivacyMode} />

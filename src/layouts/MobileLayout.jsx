@@ -62,19 +62,20 @@ export function MobileLayout({
         if (activeTab === 'home') {
             return (
                 <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6 pb-24">
-                    <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-6 border border-slate-700 shadow-xl relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-violet-600/20 blur-3xl rounded-full -mr-10 -mt-10 animate-pulse"></div>
+                    <div className="bg-slate-900/60 backdrop-blur-2xl rounded-3xl p-6 border border-white/[0.08] shadow-2xl shadow-indigo-900/20 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-48 h-48 bg-violet-600/30 blur-[60px] rounded-full -mr-10 -mt-10 animate-pulse"></div>
+                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-secondary/20 blur-[50px] rounded-full -ml-10 -mb-10"></div>
                         <div className="relative z-10">
                             <span className="text-slate-400 text-sm font-medium">Saldo Total</span>
-                            <div className="text-3xl font-bold text-white mt-1">{formatMoney(balance)}</div>
+                            <div className="text-4xl font-black text-white mt-1 font-outfit tracking-tight">{formatMoney(balance)}</div>
                             <div className="grid grid-cols-2 gap-4 mt-6">
-                                <div className="bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
-                                    <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold mb-1"><TrendingUp size={12} /> ENTRADAS</div>
-                                    <span className="text-lg font-semibold text-white">{formatMoney(income)}</span>
+                                <div className="bg-slate-800/80 p-4 rounded-2xl border border-white/[0.05] shadow-inner">
+                                    <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold mb-1"><TrendingUp size={14} /> ENTRADAS</div>
+                                    <span className="text-xl font-bold text-white font-outfit">{formatMoney(income)}</span>
                                 </div>
-                                <div className="bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
-                                    <div className="flex items-center gap-2 text-red-400 text-xs font-bold mb-1"><TrendingDown size={12} /> SAÍDAS</div>
-                                    <span className="text-lg font-semibold text-white">{formatMoney(expenses)}</span>
+                                <div className="bg-slate-800/80 p-4 rounded-2xl border border-white/[0.05] shadow-inner">
+                                    <div className="flex items-center gap-2 text-red-400 text-xs font-bold mb-1"><TrendingDown size={14} /> SAÍDAS</div>
+                                    <span className="text-xl font-bold text-white font-outfit">{formatMoney(expenses)}</span>
                                 </div>
                             </div>
                         </div>
@@ -91,7 +92,7 @@ export function MobileLayout({
                                 {transactions.map((t, i) => (
                                     <motion.div
                                         key={t.id} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ delay: i * 0.05 }}
-                                        className="bg-slate-800 p-4 rounded-xl flex items-center justify-between border border-slate-700/50"
+                                        className="bg-slate-800/60 backdrop-blur-md p-4 rounded-2xl flex items-center justify-between border border-white/[0.05] shadow-sm hover:bg-slate-800 transition-colors"
                                     >
                                         <div className="flex items-center gap-4">
                                             <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xl">{t.categoryIcon}</div>
@@ -104,7 +105,7 @@ export function MobileLayout({
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className={`font - bold ${t.type === 'income' ? 'text-emerald-400' : 'text-white'} `}>{t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}</p>
+                                            <p className={`font-bold font-outfit text-base ${t.type === 'income' ? 'text-emerald-400' : 'text-white'} `}>{t.type === 'income' ? '+' : '-'} {formatMoney(t.amount)}</p>
                                             {t.status === 'pending' && <p className="text-[10px] text-red-400 font-bold bg-red-500/10 px-2 py-0.5 rounded-full inline-block mt-1">PENDENTE</p>}
                                         </div>
                                         <button onClick={(e) => { e.stopPropagation(); if (confirm('Excluir?')) setTransactions(prev => prev.filter(x => x.id !== t.id)) }} className="ml-2 p-2 text-slate-500 hover:text-red-400"><Trash2 size={16} /></button>
@@ -279,31 +280,27 @@ export function MobileLayout({
             <motion.button
                 whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                 onClick={() => setIsFormOpen(true)}
-                className="fixed bottom-24 right-6 w-14 h-14 bg-violet-600 rounded-full flex items-center justify-center shadow-lg shadow-violet-600/40 z-50 text-white"
+                className="fixed bottom-28 right-6 w-14 h-14 bg-gradient-to-tr from-violet-600 to-indigo-500 rounded-full flex items-center justify-center shadow-lg shadow-violet-600/40 z-50 text-white"
             >
                 <Plus size={28} />
             </motion.button>
 
-            <nav className="fixed bottom-0 left-0 w-full bg-slate-800/90 backdrop-blur-md border-t border-slate-700/50 p-4 pb-8 z-40 max-w-md mx-auto right-0">
-                <div className="flex justify-around items-center">
-                    <button onClick={() => setActiveTab('home')} className={`relative flex flex - col items - center gap - 1 ${activeTab === 'home' ? 'text-violet-400' : 'text-slate-500'} `}>
+            <div className="fixed bottom-6 left-0 right-0 px-6 z-40 max-w-md mx-auto flex justify-center">
+                <nav className="glass w-full px-6 py-4 flex justify-around items-center rounded-[2rem]">
+                    <button onClick={() => setActiveTab('home')} className={`relative p-2 rounded-xl transition-all ${activeTab === 'home' ? 'text-violet-400 bg-violet-500/10' : 'text-slate-500 hover:text-slate-300'} `}>
                         <Wallet size={24} />
-                        {activeTab === 'home' && <motion.div layoutId="nav-pill" className="absolute -bottom-2 w-1 h-1 bg-violet-400 rounded-full" />}
                     </button>
-                    <button onClick={() => setActiveTab('stats')} className={`relative flex flex - col items - center gap - 1 ${activeTab === 'stats' ? 'text-violet-400' : 'text-slate-500'} `}>
+                    <button onClick={() => setActiveTab('stats')} className={`relative p-2 rounded-xl transition-all ${activeTab === 'stats' ? 'text-violet-400 bg-violet-500/10' : 'text-slate-500 hover:text-slate-300'} `}>
                         <PieChart size={24} />
-                        {activeTab === 'stats' && <motion.div layoutId="nav-pill" className="absolute -bottom-2 w-1 h-1 bg-violet-400 rounded-full" />}
                     </button>
-                    <button onClick={() => setActiveTab('cards')} className={`relative flex flex - col items - center gap - 1 ${activeTab === 'cards' ? 'text-violet-400' : 'text-slate-500'} `}>
+                    <button onClick={() => setActiveTab('cards')} className={`relative p-2 rounded-xl transition-all ${activeTab === 'cards' ? 'text-violet-400 bg-violet-500/10' : 'text-slate-500 hover:text-slate-300'} `}>
                         <CreditCard size={24} />
-                        {activeTab === 'cards' && <motion.div layoutId="nav-pill" className="absolute -bottom-2 w-1 h-1 bg-violet-400 rounded-full" />}
                     </button>
-                    <button onClick={() => setActiveTab('goals')} className={`relative flex flex - col items - center gap - 1 ${activeTab === 'goals' ? 'text-violet-400' : 'text-slate-500'} `}>
+                    <button onClick={() => setActiveTab('goals')} className={`relative p-2 rounded-xl transition-all ${activeTab === 'goals' ? 'text-violet-400 bg-violet-500/10' : 'text-slate-500 hover:text-slate-300'} `}>
                         <Target size={24} />
-                        {activeTab === 'goals' && <motion.div layoutId="nav-pill" className="absolute -bottom-2 w-1 h-1 bg-violet-400 rounded-full" />}
                     </button>
-                </div>
-            </nav>
+                </nav>
+            </div>
 
             <AnimatePresence>
                 {isFormOpen && <UnifiedTransactionForm isDesktop={false} onClose={() => setIsFormOpen(false)} onSave={(t) => { setTransactions([t, ...transactions]); setIsFormOpen(false); }} categories={CATEGORIES} cards={cards} />}

@@ -10,14 +10,22 @@
 
 @layer components {
   .glass {
-    @apply bg-slate-800/50 backdrop-blur-xl border border-white/5 shadow-xl rounded-2xl;
+    @apply bg-slate-900/60 backdrop-blur-2xl border border-white/[0.08] shadow-2xl shadow-black/40 rounded-3xl;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400;
+  }
+
+  .text-gradient-primary {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-indigo-400;
   }
 
   .btn-primary {
-    @apply bg-gradient-to-br from-violet-600 to-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-violet-500/20 active:scale-95 transition-transform;
+    @apply bg-gradient-to-tr from-violet-600 to-indigo-500 text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-violet-600/30 active:scale-[0.98] hover:shadow-violet-600/50 hover:from-violet-500 hover:to-indigo-400 transition-all duration-300;
   }
 
   .input-field {
-    @apply w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all;
+    @apply w-full bg-slate-800/80 border border-slate-700/50 rounded-2xl p-4 text-white focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 outline-none transition-all placeholder:text-slate-500;
   }
 }
