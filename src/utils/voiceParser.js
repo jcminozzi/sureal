@@ -1,4 +1,4 @@
-import { CATEGORIES } from '../layouts/MobileLayout';
+import { CATEGORIES } from '../constants/categories';
 
 export const parseVoiceCommand = (transcript) => {
     const text = transcript.toLowerCase();

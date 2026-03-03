@@ -1,4 +1,4 @@
-import { CATEGORIES } from '../layouts/MobileLayout';
+import { CATEGORIES } from '../constants/categories';
 
 export const parseReceiptText = (text) => {
     const cleanText = text.toUpperCase();

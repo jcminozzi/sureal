@@ -8,7 +8,7 @@ import {
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, getDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { CATEGORIES } from './MobileLayout';
+import { CATEGORIES } from '../constants/categories';
 import { BANKS } from '../constants/banks';
 import { calculateLevel } from '../utils/gamification';
 import { SmartTips } from '../components/SmartTips';

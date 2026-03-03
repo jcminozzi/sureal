@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { AppProvider } from './context/AppContext';
+
 import { ThemeProvider } from './context/ThemeContext';
 
 const MobileLayout = lazy(() => import('./layouts/MobileLayout').then(module => ({ default: module.MobileLayout })));
@@ -76,10 +76,8 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AppProvider>
-      <ThemeProvider theme="dark">
-        <AppContent />
-      </ThemeProvider>
-    </AppProvider>
+    <ThemeProvider theme="dark">
+      <AppContent />
+    </ThemeProvider>
   );
 }
