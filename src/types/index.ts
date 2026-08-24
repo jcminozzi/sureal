@@ -22,6 +22,10 @@ export interface Transaction {
   loanId?: string;
   splitGroupId?: string;
   splitPart?: string;
+  importFingerprint?: string;
+  importSource?: string;
+  externalId?: string;
+  importedAt?: string;
   createdAt?: string;
 }
 
@@ -87,6 +91,15 @@ export interface Category {
   type?: TransactionType | 'both';
 }
 
+export interface ImportRule {
+  id: string;
+  keyword: string;
+  categoryLabel: string;
+  categoryIcon: string;
+  transactionType: TransactionType | 'both';
+  createdAt: string;
+}
+
 export type Budgets = Record<string, number>;
 
 export type InvestmentType = 'fixed-income' | 'treasury' | 'fund' | 'stock' | 'etf' | 'fii' | 'crypto' | 'savings' | 'other';
@@ -142,7 +155,7 @@ export interface FinancialSummary {
 
 export interface BackupData {
   app: 'meus-gastinhos';
-  version: 4;
+  version: 5;
   exportedAt: string;
   transactions: Transaction[];
   cards: Card[];
@@ -150,6 +163,7 @@ export interface BackupData {
   budgets: Budgets;
   investments: Investment[];
   loans: Loan[];
+  importRules: ImportRule[];
   userName: string;
   theme: Theme;
 }

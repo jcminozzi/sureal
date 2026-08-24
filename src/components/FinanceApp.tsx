@@ -13,6 +13,7 @@ import {
   CircleDollarSign,
   Eye,
   EyeOff,
+  FileUp,
   Flag,
   Gauge,
   LayoutDashboard,
@@ -39,6 +40,7 @@ import {
 import { useStore } from '../store/useStore';
 import type { Goal, Transaction, TransactionDraft } from '../types';
 import { SettingsPanel } from './SettingsPanel';
+import { ImportPanel } from './ImportPanel';
 import { TransactionForm } from './TransactionForm';
 import { WealthView } from './WealthView';
 
@@ -157,6 +159,7 @@ export function FinanceApp() {
   const [transactionModal, setTransactionModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<TransactionFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -256,7 +259,7 @@ export function FinanceApp() {
               {monthlyTransactions.length === 0 && (
                 <section className="welcome-card">
                   <div><span className="eyebrow">Comece pelo básico</span><h2>Registre o que entrou e o que saiu.</h2><p>Em menos de um minuto você já enxerga o resultado do mês. Nenhum cadastro ou conexão bancária.</p></div>
-                  <button className="button button--on-accent" onClick={openNewTransaction}><Plus size={18} /> Fazer primeiro lançamento</button>
+                  <div className="welcome-actions"><button className="button button--on-accent" onClick={() => setImportOpen(true)}><FileUp size={18} /> Importar extrato</button><button className="button button--welcome-ghost" onClick={openNewTransaction}><Plus size={18} /> Digitar manualmente</button></div>
                 </section>
               )}
               <section className="summary-grid" aria-label="Resumo financeiro">
@@ -298,7 +301,7 @@ export function FinanceApp() {
 
           {view === 'transactions' && (
             <section className="panel transactions-panel">
-              <header className="panel__header panel__header--wrap"><div><span className="eyebrow">{monthlyTransactions.length} no período</span><h2>Seus lançamentos</h2></div><button className="button button--primary" onClick={openNewTransaction}><Plus size={17} /> Adicionar</button></header>
+              <header className="panel__header panel__header--wrap"><div><span className="eyebrow">{monthlyTransactions.length} no período</span><h2>Seus lançamentos</h2></div><div className="panel-actions"><button className="button button--secondary" onClick={() => setImportOpen(true)}><FileUp size={17} /> Importar extrato</button><button className="button button--primary" onClick={openNewTransaction}><Plus size={17} /> Adicionar</button></div></header>
               <div className="filters">
                 <label className="search-field"><Search size={18} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por descrição ou categoria" />{search && <button onClick={() => setSearch('')} aria-label="Limpar busca"><X size={16} /></button>}</label>
                 <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as TransactionFilter)} aria-label="Filtrar por tipo"><option value="all">Entradas e saídas</option><option value="expense">Somente saídas</option><option value="income">Somente entradas</option></select>
@@ -331,7 +334,8 @@ export function FinanceApp() {
       <button className="mobile-fab" onClick={openNewTransaction} aria-label="Novo lançamento"><Plus size={25} /></button>
 
       {transactionModal && <TransactionForm cards={store.cards} transaction={editingTransaction} onClose={() => { setTransactionModal(false); setEditingTransaction(null); }} onCreate={createTransaction} onUpdate={store.updateTransaction} />}
-      {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
+      {importOpen && <ImportPanel onClose={() => setImportOpen(false)} onImported={() => { setImportOpen(false); setView('transactions'); }} />}
+      {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} onOpenImporter={() => { setSettingsOpen(false); setImportOpen(true); }} />}
     </div>
   );
 }

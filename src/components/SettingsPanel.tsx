@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
-import { CreditCard, Download, FileDown, HardDrive, Moon, Plus, ShieldCheck, Sun, Trash2, Upload, UserRound, X } from 'lucide-react';
+import { CreditCard, Download, FileDown, FileUp, HardDrive, Moon, Plus, ShieldCheck, Sun, Trash2, Upload, UserRound, X } from 'lucide-react';
 import { CARD_PRESETS } from '../constants/cardPresets';
 import { parseBackup } from '../lib/finance';
 import { useStore } from '../store/useStore';
 import type { BackupData, Card } from '../types';
 
-interface SettingsPanelProps { onClose: () => void }
+interface SettingsPanelProps { onClose: () => void; onOpenImporter: () => void }
 
 const downloadFile = (name: string, content: string, type: string) => {
   const url = URL.createObjectURL(new Blob([content], { type }));
@@ -18,7 +18,7 @@ const downloadFile = (name: string, content: string, type: string) => {
 
 const csvCell = (value: unknown) => `"${String(value ?? '').replace(/"/g, '""')}"`;
 
-export function SettingsPanel({ onClose }: SettingsPanelProps) {
+export function SettingsPanel({ onClose, onOpenImporter }: SettingsPanelProps) {
   const store = useStore();
   const [name, setName] = useState(store.userName);
   const [bankName, setBankName] = useState('');
@@ -63,7 +63,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
   const exportBackup = () => {
     const data: BackupData = {
       app: 'meus-gastinhos',
-      version: 4,
+      version: 5,
       exportedAt: new Date().toISOString(),
       transactions: store.transactions,
       cards: store.cards,
@@ -71,6 +71,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
       budgets: store.budgets,
       investments: store.investments,
       loans: store.loans,
+      importRules: store.importRules,
       userName: store.userName,
       theme: store.theme,
     };
@@ -116,7 +117,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
   };
 
   const clearData = () => {
-    if (!window.confirm('Apagar lançamentos, cartões, metas, limites, empréstimos e investimentos deste dispositivo?')) return;
+    if (!window.confirm('Apagar lançamentos, cartões, metas, limites, empréstimos, investimentos e regras de importação deste dispositivo?')) return;
     if (!window.confirm('Esta ação não pode ser desfeita sem um backup. Deseja continuar?')) return;
     store.clearAllData();
     setName('');
@@ -159,6 +160,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
           <section className="settings-section">
             <div className="settings-section__title"><HardDrive size={20} /><div><h3>Seus dados</h3><p>Ficam apenas neste navegador. Faça backup antes de trocar de aparelho.</p></div></div>
             <div className="settings-actions">
+              <button className="button button--secondary" onClick={onOpenImporter}><FileUp size={17} /> Importar OFX/CSV</button>
               <button className="button button--secondary" onClick={exportBackup}><Download size={17} /> Baixar backup</button>
               <button className="button button--secondary" onClick={exportCsv}><FileDown size={17} /> Exportar planilha</button>
               <button className="button button--ghost" onClick={() => importRef.current?.click()}><Upload size={17} /> Restaurar backup</button>

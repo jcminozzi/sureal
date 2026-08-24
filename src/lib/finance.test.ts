@@ -110,10 +110,11 @@ describe('parseBackup', () => {
       cards: [],
       exportDate: '2026-01-01T00:00:00.000Z',
     });
-    expect(result?.version).toBe(4);
+    expect(result?.version).toBe(5);
     expect(result?.goals).toEqual([]);
     expect(result?.budgets).toEqual({});
     expect(result?.investments).toEqual([]);
     expect(result?.loans).toEqual([]);
+    expect(result?.importRules).toEqual([]);
   });
 });

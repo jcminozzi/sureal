@@ -61,6 +61,7 @@
     "src/components/FinanceApp.tsx",
     "src/components/TransactionForm.tsx",
     "src/components/SettingsPanel.tsx",
+    "src/components/ImportPanel.tsx",
     "src/components/WealthView.tsx",
     "src/components/ErrorBoundary.tsx",
     "src/store/useStore.ts",

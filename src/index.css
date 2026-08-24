@@ -108,6 +108,8 @@ h1, h2, h3, p { margin: 0; }
 .button--secondary:hover, .button--ghost:hover { border-color: var(--line-strong); background: var(--surface-soft); }
 .button--ghost { border-color: transparent; background: transparent; color: var(--muted); }
 .button--on-accent { background: #fffaf2; color: #183b34; }
+.button--welcome-ghost { border-color: rgba(255,255,255,.28); background: rgba(255,255,255,.06); color: #fffaf2; }
+.button--welcome-ghost:hover { background: rgba(255,255,255,.13); }
 .button--small { min-height: 34px; padding: 0 11px; border-color: var(--line); background: var(--surface-raised); font-size: .72rem; }
 .icon-button { display: inline-grid; width: 40px; height: 40px; flex: 0 0 auto; place-items: center; padding: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--muted); transition: .15s ease; }
 .icon-button:hover { border-color: var(--line-strong); background: var(--surface-soft); color: var(--ink); }
@@ -125,6 +127,7 @@ h1, h2, h3, p { margin: 0; }
 .welcome-card .eyebrow, .budget-hero .eyebrow, .goal-hero .eyebrow { color: rgba(255,255,255,.66); }
 .welcome-card h2, .budget-hero h2, .goal-hero h2 { max-width: 760px; font-size: clamp(1.6rem, 3vw, 2.45rem); line-height: 1.05; letter-spacing: -.055em; }
 .welcome-card p, .budget-hero p, .goal-hero p { max-width: 640px; margin-top: 12px; color: rgba(255,255,255,.72); font-size: .9rem; line-height: 1.6; }
+.welcome-actions, .panel-actions { display: flex; flex-wrap: wrap; gap: 9px; }
 
 .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
 .summary-card { position: relative; display: flex; min-height: 156px; flex-direction: column; padding: 20px; overflow: hidden; border: 1px solid var(--line); border-radius: 19px; background: var(--surface); box-shadow: var(--shadow); transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease; animation: card-rise .42s both; }
@@ -350,6 +353,73 @@ h1, h2, h3, p { margin: 0; }
 .danger-link { display: inline-flex; width: max-content; align-items: center; gap: 6px; padding: 4px 0; border: 0; background: transparent; color: var(--expense); font-size: .68rem; font-weight: 700; }
 .settings-message { position: sticky; bottom: 0; padding: 12px 24px; background: var(--income-soft); color: var(--income); font-size: .7rem; font-weight: 800; text-align: center; }
 
+.import-modal { width: min(1160px, 100%); }
+.import-content { display: grid; gap: 18px; padding: 22px 24px 24px; overflow-y: auto; }
+.import-dropzone { display: flex; min-height: 210px; flex-direction: column; align-items: center; justify-content: center; gap: 9px; padding: 24px; border: 2px dashed var(--line-strong); border-radius: 18px; background: var(--surface-soft); color: var(--ink); text-align: center; transition: .18s ease; }
+.import-dropzone:hover { transform: translateY(-2px); border-color: var(--brand); background: var(--brand-soft); }
+.import-dropzone > span { display: grid; width: 54px; height: 54px; place-items: center; margin-bottom: 3px; border-radius: 17px; background: var(--brand); color: var(--surface); box-shadow: var(--shadow); }
+:root[data-theme="dark"] .import-dropzone > span { color: #102019; }
+.import-dropzone strong { font-size: 1rem; }
+.import-dropzone small { max-width: 480px; color: var(--muted); font-size: .7rem; line-height: 1.5; }
+.import-assurance { display: flex; align-items: flex-start; gap: 10px; padding: 13px 14px; border-radius: 13px; background: var(--income-soft); color: var(--income); }
+.import-assurance > span { display: flex; flex-direction: column; gap: 3px; }
+.import-assurance strong { font-size: .73rem; }
+.import-assurance small { color: var(--muted); font-size: .64rem; line-height: 1.45; }
+.rules-box, .mapping-box { display: grid; gap: 14px; padding: 17px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface-raised); }
+.rules-box > header > div { display: flex; align-items: flex-start; gap: 9px; }
+.rules-box > header svg { color: var(--pending); }
+.rules-box > header span { display: flex; flex-direction: column; gap: 3px; }
+.rules-box > header strong { font-size: .77rem; }
+.rules-box > header small, .mapping-box > div:first-child p { color: var(--muted); font-size: .64rem; line-height: 1.45; }
+.rule-list { display: flex; flex-wrap: wrap; gap: 7px; }
+.rule-list > div { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 10px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface-soft); }
+.rule-list > div > span { display: flex; flex-direction: column; gap: 2px; }
+.rule-list strong { max-width: 190px; overflow: hidden; font-size: .66rem; text-overflow: ellipsis; white-space: nowrap; }
+.rule-list small { color: var(--muted); font-size: .56rem; }
+.rule-list .icon-button { width: 27px; height: 27px; border: 0; }
+.rule-form { display: grid; grid-template-columns: minmax(160px, 1fr) 120px minmax(170px, 1fr) auto; align-items: end; gap: 8px; }
+.import-file { display: flex; align-items: center; gap: 11px; padding: 13px 14px; border-radius: 13px; background: var(--brand-soft); color: var(--brand); }
+.import-file > span { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
+.import-file strong { overflow: hidden; font-size: .73rem; text-overflow: ellipsis; white-space: nowrap; }
+.import-file small { color: var(--muted); font-size: .62rem; }
+.mapping-box > div:first-child .eyebrow { margin-bottom: 4px; }
+.import-footer { position: sticky; bottom: -24px; z-index: 3; margin: 0 -24px -24px; padding: 15px 24px; border-top: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 96%, transparent); backdrop-filter: blur(12px); }
+.import-summary { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.import-summary > div { display: flex; gap: 8px; }
+.import-summary > div > span { display: flex; min-width: 92px; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 11px; background: var(--surface-soft); }
+.import-summary > div > span.has-warning { background: var(--pending-soft); color: var(--pending); }
+.import-summary strong { font-size: .85rem; }
+.import-summary small { color: var(--muted); font-size: .58rem; }
+.import-review-hint { margin-top: -8px; color: var(--muted); font-size: .65rem; line-height: 1.5; }
+.import-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; padding: 12px; border-radius: 13px; background: var(--surface-soft); }
+.import-table { display: grid; max-height: 410px; overflow: auto; border: 1px solid var(--line); border-radius: 15px; background: var(--surface-raised); }
+.import-row { display: grid; grid-template-columns: 28px 125px minmax(190px, 1.45fr) 93px minmax(145px, 1fr) 118px; align-items: center; gap: 8px; min-width: 880px; padding: 9px 10px; border-bottom: 1px solid var(--line); }
+.import-row:last-child { border-bottom: 0; }
+.import-row.is-duplicate { background: color-mix(in srgb, var(--pending-soft) 68%, transparent); }
+.import-check { display: grid; place-items: center; }
+.import-check input { width: 17px; height: 17px; accent-color: var(--brand); }
+.import-row input, .import-row select { width: 100%; min-width: 0; height: 37px; padding: 0 9px; border: 1px solid transparent; border-radius: 9px; outline: 0; background: transparent; color: var(--ink); font-size: .66rem; }
+.import-row input:hover, .import-row select:hover, .import-row input:focus, .import-row select:focus { border-color: var(--line-strong); background: var(--surface); }
+.import-description { position: relative; min-width: 0; }
+.import-description input { font-weight: 700; }
+.import-description small { position: absolute; left: 9px; bottom: -4px; padding: 1px 5px; border-radius: 999px; background: var(--pending-soft); color: var(--pending); font-size: .49rem; font-weight: 800; }
+.import-type { font-weight: 800; }
+.import-type.is-income { color: var(--income); }
+.import-type.is-expense { color: var(--expense); }
+.import-amount { display: flex; height: 37px; align-items: center; padding-left: 8px; border-radius: 9px; }
+.import-amount > span { color: var(--muted); font-size: .6rem; font-weight: 800; }
+.import-amount input { padding-left: 5px; font-weight: 800; text-align: right; }
+.import-total { display: flex; align-items: center; justify-content: flex-end; gap: 14px; padding: 0 3px; }
+.import-total span { color: var(--muted); font-size: .65rem; }
+.import-total strong { font-size: .88rem; }
+.import-total strong.is-positive { color: var(--income); }
+.import-total strong.is-negative { color: var(--expense); }
+.import-success { display: flex; min-height: 390px; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 38px; text-align: center; }
+.import-success > span { display: grid; width: 68px; height: 68px; place-items: center; margin-bottom: 3px; border-radius: 22px; background: var(--income-soft); color: var(--income); }
+.import-success h3 { font-size: 1.18rem; }
+.import-success p { max-width: 520px; color: var(--muted); font-size: .72rem; line-height: 1.6; }
+.import-success > div { display: flex; gap: 8px; margin-top: 8px; }
+
 .wealth-view { --wealth-accent: #c8793f; }
 .wealth-hero { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 30px; padding: clamp(25px, 4vw, 42px); overflow: hidden; border-radius: 24px; background: linear-gradient(130deg, #163b35, #285b4f); color: #fffaf3; box-shadow: var(--shadow); }
 .wealth-hero::before { position: absolute; right: 16%; top: -75%; width: 310px; height: 310px; border: 1px solid rgba(255,255,255,.1); border-radius: 50%; box-shadow: 0 0 0 54px rgba(255,255,255,.035), 0 0 0 108px rgba(255,255,255,.02); content: ''; }
@@ -453,6 +523,8 @@ h1, h2, h3, p { margin: 0; }
   .month-toolbar { margin-bottom: 17px; }
   .month-toolbar > div { min-width: 154px; }
   .welcome-card, .budget-hero, .goal-hero { align-items: flex-start; flex-direction: column; padding: 24px 21px; border-radius: 20px; }
+  .welcome-actions { width: 100%; }
+  .welcome-actions .button { width: 100%; }
   .welcome-card h2, .budget-hero h2, .goal-hero h2 { font-size: 1.65rem; }
   .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
   .summary-card { min-height: 142px; padding: 16px; }
@@ -460,6 +532,9 @@ h1, h2, h3, p { margin: 0; }
   .summary-card > small { line-height: 1.35; }
   .panel { padding: 18px 15px; border-radius: 18px; }
   .panel__header { margin-bottom: 17px; }
+  .panel__header--wrap { align-items: flex-start; flex-direction: column; }
+  .panel-actions { width: 100%; }
+  .panel-actions .button { flex: 1; padding: 0 10px; }
   .filters { grid-template-columns: 1fr 1fr; }
   .search-field { grid-column: span 2; }
   .transaction-row { grid-template-columns: 39px minmax(0, 1fr) auto; gap: 9px; padding: 11px 0; }
@@ -478,7 +553,7 @@ h1, h2, h3, p { margin: 0; }
   .modal-backdrop { align-items: flex-end; padding: 0; }
   .modal { width: 100%; max-height: 94vh; border-width: 1px 0 0; border-radius: 23px 23px 0 0; }
   .modal__header { padding: 18px; }
-  .transaction-form, .settings-section { padding: 18px; }
+  .transaction-form, .settings-section, .import-content { padding: 18px; }
   .category-picker > div { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .form-grid { grid-template-columns: 1fr; }
   .field--wide { grid-column: auto; }
@@ -496,6 +571,17 @@ h1, h2, h3, p { margin: 0; }
   .settings-actions { display: grid; grid-template-columns: 1fr; }
   .settings-actions .button { width: 100%; }
   .modal__footer .button { flex: 1; padding: 0 10px; }
+  .rule-form { grid-template-columns: 1fr 1fr; }
+  .rule-form .field:first-child { grid-column: span 2; }
+  .rule-form .button { grid-column: span 2; }
+  .import-summary { align-items: flex-start; flex-direction: column; }
+  .import-summary > div { width: 100%; }
+  .import-summary > div > span { min-width: 0; flex: 1; padding: 9px; }
+  .import-options { grid-template-columns: 1fr; }
+  .import-table { max-height: 47vh; }
+  .import-footer { bottom: -18px; margin: 0 -18px -18px; padding: 13px 18px max(13px, env(safe-area-inset-bottom)); }
+  .import-success { min-height: 360px; padding: 24px 8px; }
+  .import-success > div { width: 100%; flex-direction: column; }
 }
 
 @media (max-width: 390px) {

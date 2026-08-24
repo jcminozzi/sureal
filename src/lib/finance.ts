@@ -1,5 +1,5 @@
 import { addMonths, endOfMonth, isWithinInterval, parseISO, startOfMonth } from 'date-fns';
-import type { BackupData, Card, FinancialSummary, Goal, Investment, Loan, LoanDraft, Transaction, TransactionDraft } from '../types';
+import type { BackupData, Card, FinancialSummary, Goal, ImportRule, Investment, Loan, LoanDraft, Transaction, TransactionDraft } from '../types';
 
 export const formatCurrency = (value: number, hidden = false): string => {
   if (hidden) return 'R$ ••••';
@@ -239,9 +239,22 @@ export const parseBackup = (value: unknown): BackupData | null => {
   const loans = Array.isArray(value.loans)
     ? value.loans.filter((item): item is Loan => isRecord(item) && typeof item.id === 'string' && typeof item.name === 'string' && Array.isArray(item.paymentTransactionIds))
     : [];
+  const importRules = Array.isArray(value.importRules)
+    ? value.importRules.flatMap((item): ImportRule[] => {
+      if (!isRecord(item) || typeof item.id !== 'string' || typeof item.keyword !== 'string' || typeof item.categoryLabel !== 'string') return [];
+      return [{
+        id: item.id,
+        keyword: item.keyword,
+        categoryLabel: item.categoryLabel,
+        categoryIcon: typeof item.categoryIcon === 'string' ? item.categoryIcon : '📦',
+        transactionType: item.transactionType === 'income' || item.transactionType === 'expense' ? item.transactionType : 'both',
+        createdAt: typeof item.createdAt === 'string' ? item.createdAt : new Date().toISOString(),
+      }];
+    })
+    : [];
   return {
     app: 'meus-gastinhos',
-    version: 4,
+    version: 5,
     exportedAt: typeof value.exportedAt === 'string'
       ? value.exportedAt
       : typeof value.exportDate === 'string' ? value.exportDate : new Date().toISOString(),
@@ -251,6 +264,7 @@ export const parseBackup = (value: unknown): BackupData | null => {
     budgets,
     investments,
     loans,
+    importRules,
     userName: typeof value.userName === 'string' ? value.userName : '',
     theme: value.theme === 'dark' ? 'dark' : 'light',
   };

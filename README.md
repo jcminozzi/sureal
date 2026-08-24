@@ -21,6 +21,8 @@ O surReal ajuda a registrar entradas e saídas, acompanhar pendências, organiza
 - Modo privacidade para ocultar valores na tela
 - Tema claro e escuro
 - Backup completo em JSON, restauração validada e exportação em CSV
+- Importação local de extratos OFX e CSV, com pré-visualização e mapeamento de colunas
+- Detecção de lançamentos duplicados, categorização automática e regras personalizadas
 - Interface responsiva para celular e computador
 - Funcionamento offline após o primeiro acesso
 
@@ -69,6 +71,6 @@ src/
 
 ## Compatibilidade
 
-A versão 4 mantém internamente a chave de armazenamento `meusgastinhos-storage` para que o rebranding não apague dados existentes. Backups antigos do **Meus Gastinhos** com `transactions`, `cards` e `exportDate` também podem ser restaurados.
+A versão 5 mantém internamente a chave de armazenamento `meusgastinhos-storage` para que as atualizações não apaguem dados existentes. Backups antigos do **Meus Gastinhos** com `transactions`, `cards` e `exportDate` também podem ser restaurados.
 
 Os cálculos de empréstimos e compras com juros são estimativas por prestações fixas e capitalização mensal. O custo real pode incluir IOF, seguros, tarifas e outras parcelas do CET informado pela instituição financeira.
