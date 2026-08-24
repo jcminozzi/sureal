@@ -17,7 +17,7 @@
     "noEmit": true,
     "jsx": "react-jsx",
     /* Linting */
-    "strict": false,
+    "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
@@ -52,15 +52,19 @@
       ]
     },
     /* Decorators */
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "src"
-  ],
-  "references": [
-    {
-      "path": "./tsconfig.node.json"
-    }
+    "src/main.tsx",
+    "src/App.tsx",
+    "src/vite-env.d.ts",
+    "src/components/FinanceApp.tsx",
+    "src/components/TransactionForm.tsx",
+    "src/components/SettingsPanel.tsx",
+    "src/components/ErrorBoundary.tsx",
+    "src/store/useStore.ts",
+    "src/lib/**/*.ts",
+    "src/types/index.ts",
+    "src/constants/categories.ts"
   ]
 }

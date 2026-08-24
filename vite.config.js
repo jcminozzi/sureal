@@ -1,8 +1,5 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import tailwindcss from 'tailwindcss'
-import autoprefixer from 'autoprefixer'
-
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
@@ -13,46 +10,28 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,tsx,ts}'],
-        maximumFileSizeToCacheInBytes: 5000000
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
+        maximumFileSizeToCacheInBytes: 3000000,
+        cleanupOutdatedCaches: true,
       },
       manifest: {
         name: 'Meus Gastinhos',
         short_name: 'Gastinhos',
-        description: 'Gerenciador Financeiro Premium',
-        theme_color: '#0f172a',
-        background_color: '#0f172a',
+        description: 'Seu controle financeiro simples, privado e direto ao ponto.',
+        theme_color: '#183b34',
+        background_color: '#f5f3ed',
         display: 'standalone',
+        start_url: '/',
+        lang: 'pt-BR',
         icons: [
           {
-            src: 'vite.svg',
-            sizes: '192x192',
-            type: 'image/svg+xml'
-          },
-          {
-            src: 'vite.svg',
-            sizes: '512x512',
+            src: '/icon.svg',
+            sizes: 'any',
             type: 'image/svg+xml'
           }
         ]
       }
     })
   ],
-  css: {
-    postcss: {
-      plugins: [
-        tailwindcss,
-        autoprefixer,
-      ],
-    },
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'framer-motion', 'recharts', 'lucide-react', 'date-fns'],
-        },
-      },
-    },
-  },
+  build: { target: 'es2020', sourcemap: true },
 })
