@@ -61,10 +61,12 @@
     "src/components/FinanceApp.tsx",
     "src/components/TransactionForm.tsx",
     "src/components/SettingsPanel.tsx",
+    "src/components/WealthView.tsx",
     "src/components/ErrorBoundary.tsx",
     "src/store/useStore.ts",
     "src/lib/**/*.ts",
     "src/types/index.ts",
-    "src/constants/categories.ts"
+    "src/constants/categories.ts",
+    "src/constants/cardPresets.ts"
   ]
 }

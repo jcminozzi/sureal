@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Meus Gastinhos">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="surReal">
   <rect width="512" height="512" rx="118" fill="#183b34"/>
   <path d="M128 160c0-35 29-64 64-64h128c35 0 64 29 64 64v192c0 35-29 64-64 64H192c-35 0-64-29-64-64V160Z" fill="#f5f3ed"/>
   <path d="M176 218h160M176 282h94" stroke="#183b34" stroke-width="32" stroke-linecap="round"/>

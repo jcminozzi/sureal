@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { CreditCard, Download, FileDown, HardDrive, Moon, Plus, ShieldCheck, Sun, Trash2, Upload, UserRound, X } from 'lucide-react';
+import { CARD_PRESETS } from '../constants/cardPresets';
 import { parseBackup } from '../lib/finance';
 import { useStore } from '../store/useStore';
 import type { BackupData, Card } from '../types';
@@ -22,6 +23,8 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
   const [name, setName] = useState(store.userName);
   const [bankName, setBankName] = useState('');
   const [dueDay, setDueDay] = useState('10');
+  const [closingDay, setClosingDay] = useState('3');
+  const [selectedPresetId, setSelectedPresetId] = useState('');
   const [message, setMessage] = useState('');
   const importRef = useRef<HTMLInputElement>(null);
 
@@ -40,29 +43,38 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
     event.preventDefault();
     const day = Math.max(1, Math.min(31, Number(dueDay)));
     if (!bankName.trim() || !Number.isFinite(day)) return;
+    const preset = CARD_PRESETS.find((item) => item.id === selectedPresetId);
     const card: Card = {
       id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`,
       bankName: bankName.trim(),
       dueDay: day,
+      closingDay: Math.max(1, Math.min(31, Number(closingDay))),
+      presetId: preset?.id,
+      bankId: preset?.id,
+      kind: preset?.kind ?? 'credit-card',
+      accentColor: preset?.color ?? '#183b34',
     };
     store.addCard(card);
     setBankName('');
+    setSelectedPresetId('');
     setMessage('Cartão adicionado.');
   };
 
   const exportBackup = () => {
     const data: BackupData = {
       app: 'meus-gastinhos',
-      version: 3,
+      version: 4,
       exportedAt: new Date().toISOString(),
       transactions: store.transactions,
       cards: store.cards,
       goals: store.goals,
       budgets: store.budgets,
+      investments: store.investments,
+      loans: store.loans,
       userName: store.userName,
       theme: store.theme,
     };
-    downloadFile(`meus-gastinhos-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(data, null, 2), 'application/json');
+    downloadFile(`surreal-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(data, null, 2), 'application/json');
     setMessage('Backup baixado. Guarde esse arquivo em local seguro.');
   };
 
@@ -80,7 +92,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
         item.installment ?? '',
       ]);
     downloadFile(
-      `meus-gastinhos-${new Date().toISOString().slice(0, 10)}.csv`,
+      `surreal-lancamentos-${new Date().toISOString().slice(0, 10)}.csv`,
       `\uFEFF${[header, ...rows].map((row) => row.map(csvCell).join(';')).join('\n')}`,
       'text/csv;charset=utf-8',
     );
@@ -104,7 +116,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
   };
 
   const clearData = () => {
-    if (!window.confirm('Apagar todos os lançamentos, cartões, metas e limites deste dispositivo?')) return;
+    if (!window.confirm('Apagar lançamentos, cartões, metas, limites, empréstimos e investimentos deste dispositivo?')) return;
     if (!window.confirm('Esta ação não pode ser desfeita sem um backup. Deseja continuar?')) return;
     store.clearAllData();
     setName('');
@@ -131,9 +143,14 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
           <section className="settings-section">
             <div className="settings-section__title"><CreditCard size={20} /><div><h3>Cartões</h3><p>Use cartões para lançar e parcelar compras.</p></div></div>
-            {store.cards.length > 0 && <div className="card-list">{store.cards.map((card) => <div key={card.id}><span><CreditCard size={17} /><strong>{card.bankName}</strong><small>Vence dia {card.dueDay}</small></span><button className="icon-button icon-button--danger" onClick={() => window.confirm(`Excluir ${card.bankName}?`) && store.deleteCard(card.id)} aria-label={`Excluir ${card.bankName}`}><Trash2 size={17} /></button></div>)}</div>}
+            <div className="card-presets" aria-label="Cartões predefinidos">
+              {CARD_PRESETS.map((preset) => <button key={preset.id} type="button" className={selectedPresetId === preset.id ? 'is-selected' : ''} onClick={() => { setSelectedPresetId(preset.id); setBankName(preset.name); }}><span style={{ background: preset.color, color: preset.textColor }}>{preset.shortName}</span><small>{preset.name}</small></button>)}
+              <button type="button" className={selectedPresetId === 'custom' ? 'is-selected' : ''} onClick={() => { setSelectedPresetId('custom'); setBankName(''); }}><span className="custom-card-mark">+</span><small>Outro</small></button>
+            </div>
+            {store.cards.length > 0 && <div className="card-list">{store.cards.map((card) => <div key={card.id}><span><i className="card-dot" style={{ background: card.accentColor ?? '#183b34' }} /><CreditCard size={17} /><strong>{card.bankName}</strong><small>Fecha dia {card.closingDay ?? '—'} · vence dia {card.dueDay}</small></span><button className="icon-button icon-button--danger" onClick={() => window.confirm(`Excluir ${card.bankName}?`) && store.deleteCard(card.id)} aria-label={`Excluir ${card.bankName}`}><Trash2 size={17} /></button></div>)}</div>}
             <form className="inline-form" onSubmit={addCard}>
               <label className="field"><span>Nome do cartão</span><input value={bankName} onChange={(event) => setBankName(event.target.value)} placeholder="Ex.: Nubank" /></label>
+              <label className="field field--small"><span>Fechamento</span><input type="number" min="1" max="31" value={closingDay} onChange={(event) => setClosingDay(event.target.value)} /></label>
               <label className="field field--small"><span>Vencimento</span><input type="number" min="1" max="31" value={dueDay} onChange={(event) => setDueDay(event.target.value)} /></label>
               <button className="button button--secondary" type="submit" disabled={!bankName.trim()}><Plus size={17} /> Adicionar</button>
             </form>

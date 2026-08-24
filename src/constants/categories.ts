@@ -10,6 +10,8 @@ export const CATEGORIES: Category[] = [
   { id: 'education', icon: '📚', label: 'Educação', color: '#667bb6', type: 'expense' },
   { id: 'services', icon: '💡', label: 'Contas e serviços', color: '#4f91a1', type: 'expense' },
   { id: 'shopping', icon: '🛍️', label: 'Compras', color: '#b76f53', type: 'expense' },
+  { id: 'loans', icon: '🏦', label: 'Empréstimos', color: '#8b6551', type: 'expense' },
+  { id: 'insurance', icon: '🛡️', label: 'Seguros', color: '#587a73', type: 'expense' },
   { id: 'other-expense', icon: '📦', label: 'Outros gastos', color: '#7a837e', type: 'expense' },
   { id: 'salary', icon: '💰', label: 'Salário', color: '#2f806c', type: 'income' },
   { id: 'freelance', icon: '💻', label: 'Renda extra', color: '#477f71', type: 'income' },

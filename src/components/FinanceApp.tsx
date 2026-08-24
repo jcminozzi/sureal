@@ -16,6 +16,7 @@ import {
   Flag,
   Gauge,
   LayoutDashboard,
+  Landmark,
   ListFilter,
   Pencil,
   PiggyBank,
@@ -39,8 +40,9 @@ import { useStore } from '../store/useStore';
 import type { Goal, Transaction, TransactionDraft } from '../types';
 import { SettingsPanel } from './SettingsPanel';
 import { TransactionForm } from './TransactionForm';
+import { WealthView } from './WealthView';
 
-type View = 'overview' | 'transactions' | 'budgets' | 'goals';
+type View = 'overview' | 'transactions' | 'budgets' | 'goals' | 'wealth';
 type TransactionFilter = 'all' | 'income' | 'expense';
 type StatusFilter = 'all' | 'paid' | 'pending';
 
@@ -88,7 +90,7 @@ function TransactionItem({ transaction, cardName, hidden, onEdit, onDelete, onTo
       <div className="transaction-row__category" aria-hidden="true">{transaction.categoryIcon || '•'}</div>
       <div className="transaction-row__main">
         <strong>{transaction.description || transaction.categoryLabel}</strong>
-        <span>{formatDate(transaction.date)} · {transaction.categoryLabel}{cardName ? ` · ${cardName}` : ''}{transaction.installment ? ` · ${transaction.installment}` : ''}</span>
+        <span>{formatDate(transaction.date)} · {transaction.categoryLabel}{cardName ? ` · ${cardName}` : ''}{transaction.installment ? ` · ${transaction.installment}` : ''}{transaction.splitPart ? ` · parte ${transaction.splitPart}` : ''}{transaction.interestRateMonthly ? ` · ${transaction.interestRateMonthly}% a.m.` : ''}</span>
       </div>
       <button className={`status-pill ${transaction.status === 'paid' ? 'is-paid' : 'is-pending'}`} onClick={onToggleStatus} title="Alterar status">
         {transaction.status === 'paid' ? <Check size={13} /> : <CalendarClock size={13} />}
@@ -213,7 +215,7 @@ export function FinanceApp() {
   };
 
   if (!store.hasHydrated) {
-    return <main className="app-loading"><span className="brand-mark">mg</span><p>Organizando seus gastinhos…</p></main>;
+    return <main className="app-loading"><span className="brand-mark">sR</span><p>Organizando sua vida financeira…</p></main>;
   }
 
   const navItems: { id: View; label: string; icon: React.ReactNode }[] = [
@@ -221,12 +223,13 @@ export function FinanceApp() {
     { id: 'transactions', label: 'Lançamentos', icon: <ListFilter size={19} /> },
     { id: 'budgets', label: 'Limites', icon: <Gauge size={19} /> },
     { id: 'goals', label: 'Metas', icon: <Target size={19} /> },
+    { id: 'wealth', label: 'Patrimônio', icon: <Landmark size={19} /> },
   ];
 
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand"><span className="brand-mark">mg</span><span><strong>meus gastinhos</strong><small>dinheiro sem complicação</small></span></div>
+        <div className="brand"><span className="brand-mark">sR</span><span><strong className="brand-wordmark"><span>sur</span><span className="brand-real">Real</span></strong><small>dinheiro real, sem complicação</small></span></div>
         <nav aria-label="Navegação principal">{navItems.map((item) => <button key={item.id} className={view === item.id ? 'is-active' : ''} onClick={() => setView(item.id)}>{item.icon}<span>{item.label}</span></button>)}</nav>
         <div className="sidebar__privacy"><ShieldMessage /><p><strong>Privado por padrão</strong><span>Dados somente neste dispositivo.</span></p></div>
       </aside>
@@ -319,6 +322,8 @@ export function FinanceApp() {
               {store.goals.length === 0 ? <div className="panel"><EmptyState title="Nenhuma meta ainda" text="Escolha algo importante para você e acompanhe cada passo." /></div> : <section className="goals-grid">{store.goals.map((goal) => <GoalCard key={goal.id} goal={goal} hidden={store.isPrivacyMode} onUpdate={(changes) => store.updateGoal(goal.id, changes)} onDelete={() => window.confirm(`Excluir a meta “${goal.name}”?`) && store.deleteGoal(goal.id)} />)}</section>}
             </div>
           )}
+
+          {view === 'wealth' && <WealthView hidden={store.isPrivacyMode} />}
         </main>
       </div>
 

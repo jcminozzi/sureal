@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { del, get, set as setIdb } from 'idb-keyval';
-import type { BackupData, Budgets, Card, Goal, Theme, Transaction } from '../types';
+import type { BackupData, Budgets, Card, Goal, Investment, Loan, Theme, Transaction } from '../types';
 
 const STORAGE_KEY = 'meusgastinhos-storage';
 
@@ -35,6 +35,8 @@ export interface AppState {
   cards: Card[];
   goals: Goal[];
   budgets: Budgets;
+  investments: Investment[];
+  loans: Loan[];
   userName: string;
   theme: Theme;
   isPrivacyMode: boolean;
@@ -48,6 +50,11 @@ export interface AppState {
   addGoal: (goal: Goal) => void;
   deleteGoal: (id: string) => void;
   updateGoal: (id: string, updates: Partial<Goal>) => void;
+  addInvestment: (investment: Investment) => void;
+  updateInvestment: (id: string, updates: Partial<Investment>) => void;
+  deleteInvestment: (id: string) => void;
+  addLoanPlan: (loan: Loan, transactions: Transaction[]) => void;
+  deleteLoan: (id: string) => void;
   setBudget: (category: string, amount: number) => void;
   setUserName: (name: string) => void;
   setTheme: (theme: Theme) => void;
@@ -66,6 +73,8 @@ const normalizePersistedState = (persisted: unknown): Partial<AppState> => {
     cards: Array.isArray(data.cards) ? data.cards : [],
     goals: Array.isArray(data.goals) ? data.goals : [],
     budgets: data.budgets && typeof data.budgets === 'object' ? data.budgets : {},
+    investments: Array.isArray(data.investments) ? data.investments : [],
+    loans: Array.isArray(data.loans) ? data.loans : [],
     userName: typeof data.userName === 'string' ? data.userName : '',
     theme: data.theme === 'light' ? 'light' : 'dark',
     isPrivacyMode: Boolean(data.isPrivacyMode),
@@ -79,6 +88,8 @@ export const useStore = create<AppState>()(
       cards: [],
       goals: [],
       budgets: {},
+      investments: [],
+      loans: [],
       userName: '',
       theme: 'light',
       isPrivacyMode: false,
@@ -98,6 +109,19 @@ export const useStore = create<AppState>()(
       deleteGoal: (id) => set((state) => ({ goals: state.goals.filter((goal) => goal.id !== id) })),
       updateGoal: (id, updates) =>
         set((state) => ({ goals: state.goals.map((goal) => (goal.id === id ? { ...goal, ...updates } : goal)) })),
+      addInvestment: (investment) => set((state) => ({ investments: [...state.investments, investment] })),
+      updateInvestment: (id, updates) => set((state) => ({
+        investments: state.investments.map((investment) => investment.id === id ? { ...investment, ...updates } : investment),
+      })),
+      deleteInvestment: (id) => set((state) => ({ investments: state.investments.filter((investment) => investment.id !== id) })),
+      addLoanPlan: (loan, transactions) => set((state) => ({
+        loans: [...state.loans, loan],
+        transactions: [...state.transactions, ...transactions],
+      })),
+      deleteLoan: (id) => set((state) => ({
+        loans: state.loans.filter((loan) => loan.id !== id),
+        transactions: state.transactions.filter((transaction) => transaction.loanId !== id),
+      })),
       setBudget: (category, amount) =>
         set((state) => {
           const budgets = { ...state.budgets };
@@ -116,6 +140,8 @@ export const useStore = create<AppState>()(
           cards: data.cards,
           goals: data.goals,
           budgets: data.budgets,
+          investments: data.investments,
+          loans: data.loans,
           userName: data.userName,
           theme: data.theme,
           isPrivacyMode: false,
@@ -127,6 +153,8 @@ export const useStore = create<AppState>()(
           cards: [],
           goals: [],
           budgets: {},
+          investments: [],
+          loans: [],
           userName: '',
           isPrivacyMode: false,
           currentDate: new Date(),
@@ -135,7 +163,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: STORAGE_KEY,
-      version: 3,
+      version: 4,
       storage: createJSONStorage(() => resilientStorage),
       migrate: (persistedState) => normalizePersistedState(persistedState),
       partialize: (state) => ({
@@ -143,6 +171,8 @@ export const useStore = create<AppState>()(
         cards: state.cards,
         goals: state.goals,
         budgets: state.budgets,
+        investments: state.investments,
+        loans: state.loans,
         userName: state.userName,
         theme: state.theme,
         isPrivacyMode: state.isPrivacyMode,
@@ -151,4 +181,3 @@ export const useStore = create<AppState>()(
     },
   ),
 );
-

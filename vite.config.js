@@ -15,9 +15,9 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
       },
       manifest: {
-        name: 'Meus Gastinhos',
-        short_name: 'Gastinhos',
-        description: 'Seu controle financeiro simples, privado e direto ao ponto.',
+        name: 'surReal',
+        short_name: 'surReal',
+        description: 'Dinheiro real, sem complicação. Controle financeiro completo e privado.',
         theme_color: '#183b34',
         background_color: '#f5f3ed',
         display: 'standalone',

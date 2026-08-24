@@ -1,19 +1,23 @@
-# Meus Gastinhos
+# surReal
 
-Controle financeiro pessoal simples, privado e direto ao ponto.
+**Dinheiro real, sem complicação.**
 
-O Meus Gastinhos ajuda a registrar entradas e saídas, acompanhar pendências, planejar limites mensais e avançar em metas financeiras. Não exige conta, conexão bancária ou envio dos lançamentos para um servidor: os dados ficam no navegador do próprio dispositivo.
+O surReal ajuda a registrar entradas e saídas, acompanhar pendências, organizar cartões, parcelamentos, empréstimos, investimentos, limites mensais e metas financeiras. Não exige conta, conexão bancária ou envio dos lançamentos para um servidor: os dados ficam no navegador do próprio dispositivo.
 
 ## O que já funciona
 
 - Resumo mensal de entradas, saídas, pendências e resultado projetado
 - Cadastro, edição, exclusão, busca e filtros de lançamentos
 - Alteração rápida entre pago/recebido e pendente
-- Compras parceladas com divisão exata do valor total
+- Compras parceladas em até 48 vezes, com ou sem juros
+- Divisão de uma compra entre até quatro cartões, com condições independentes
 - Repetição mensal por 12 meses para contas fixas e receitas recorrentes
-- Cartões próprios com dia de vencimento
+- Mais de 20 cartões predefinidos, incluindo Amazon e Mercado Pago
+- Cartões próprios com fechamento e vencimento
 - Limites de gasto por categoria com alerta de estouro
 - Metas financeiras com acompanhamento de progresso
+- Empréstimos e financiamentos com prestações fixas e cronograma de pagamento
+- Carteira manual de investimentos com posição, ganho e rentabilidade
 - Modo privacidade para ocultar valores na tela
 - Tema claro e escuro
 - Backup completo em JSON, restauração validada e exportação em CSV
@@ -65,4 +69,6 @@ src/
 
 ## Compatibilidade
 
-A versão 3 mantém a chave de armazenamento `meusgastinhos-storage` e normaliza os dados das versões anteriores. Backups antigos com `transactions`, `cards` e `exportDate` também podem ser restaurados.
+A versão 4 mantém internamente a chave de armazenamento `meusgastinhos-storage` para que o rebranding não apague dados existentes. Backups antigos do **Meus Gastinhos** com `transactions`, `cards` e `exportDate` também podem ser restaurados.
+
+Os cálculos de empréstimos e compras com juros são estimativas por prestações fixas e capitalização mensal. O custo real pode incluir IOF, seguros, tarifas e outras parcelas do CET informado pela instituição financeira.
