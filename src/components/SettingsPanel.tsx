@@ -160,7 +160,7 @@ export function SettingsPanel({ onClose, onOpenImporter }: SettingsPanelProps) {
           <section className="settings-section">
             <div className="settings-section__title"><HardDrive size={20} /><div><h3>Seus dados</h3><p>Ficam apenas neste navegador. Faça backup antes de trocar de aparelho.</p></div></div>
             <div className="settings-actions">
-              <button className="button button--secondary" onClick={onOpenImporter}><FileUp size={17} /> Importar OFX/CSV</button>
+              <button className="button button--secondary" onClick={onOpenImporter}><FileUp size={17} /> Importar OFX/CSV/PDF</button>
               <button className="button button--secondary" onClick={exportBackup}><Download size={17} /> Baixar backup</button>
               <button className="button button--secondary" onClick={exportCsv}><FileDown size={17} /> Exportar planilha</button>
               <button className="button button--ghost" onClick={() => importRef.current?.click()}><Upload size={17} /> Restaurar backup</button>

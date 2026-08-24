@@ -17,6 +17,7 @@ import {
   type ImportCandidate,
 } from '../lib/importers';
 import { formatCurrency } from '../lib/finance';
+import { extractPdfText, parsePdfStatementText } from '../lib/pdfImport';
 import { useStore } from '../store/useStore';
 import type { ImportRule, TransactionType } from '../types';
 
@@ -60,6 +61,8 @@ export function ImportPanel({ onClose, onImported }: ImportPanelProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [stage, setStage] = useState<Stage>('upload');
   const [fileName, setFileName] = useState('');
+  const [fileDetails, setFileDetails] = useState('');
+  const [isReading, setIsReading] = useState(false);
   const [csvDocument, setCsvDocument] = useState<CsvDocument | null>(null);
   const [mapping, setMapping] = useState<CsvMapping>(emptyMapping);
   const [amountMode, setAmountMode] = useState<AmountMode>('single');
@@ -99,9 +102,22 @@ export function ImportPanel({ onClose, onImported }: ImportPanelProps) {
     if (!file) return;
     setError('');
     setFileName(file.name);
+    if (file.size > 20 * 1024 * 1024) {
+      setError('O arquivo ultrapassa 20 MB. Exporte um período menor para proteger o desempenho do dispositivo.');
+      return;
+    }
+    setIsReading(true);
     try {
-      const text = decodeStatementBuffer(await file.arrayBuffer());
+      const buffer = await file.arrayBuffer();
+      if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf') {
+        const extraction = await extractPdfText(buffer);
+        setFileDetails(`PDF · ${extraction.pages} ${extraction.pages === 1 ? 'página' : 'páginas'}`);
+        prepareReview(parsePdfStatementText(extraction.text, store.importRules));
+        return;
+      }
+      const text = decodeStatementBuffer(buffer);
       if (isOfxFile(file.name, text)) {
+        setFileDetails('OFX');
         prepareReview(parseOfx(text, store.importRules));
         return;
       }
@@ -112,7 +128,10 @@ export function ImportPanel({ onClose, onImported }: ImportPanelProps) {
       setAmountMode(inferred.amount >= 0 ? 'single' : 'separate');
       setStage('mapping');
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Não consegui ler esse arquivo.');
+      const message = cause instanceof Error ? cause.message : 'Não consegui ler esse arquivo.';
+      setError(/password|senha/i.test(message) ? 'O PDF está protegido por senha. Exporte uma cópia sem senha ou use OFX/CSV.' : message);
+    } finally {
+      setIsReading(false);
     }
   };
 
@@ -191,6 +210,7 @@ export function ImportPanel({ onClose, onImported }: ImportPanelProps) {
   const reset = () => {
     setStage('upload');
     setFileName('');
+    setFileDetails('');
     setCsvDocument(null);
     setMapping(emptyMapping);
     setRows([]);
@@ -215,12 +235,12 @@ export function ImportPanel({ onClose, onImported }: ImportPanelProps) {
         <div className="import-content">
           {stage === 'upload' && (
             <>
-              <button className="import-dropzone" type="button" onClick={() => fileRef.current?.click()}>
+              <button className="import-dropzone" type="button" onClick={() => fileRef.current?.click()} disabled={isReading}>
                 <span><FileUp size={27} /></span>
-                <strong>Escolha um arquivo OFX ou CSV</strong>
-                <small>Baixe o extrato no aplicativo do seu banco e selecione-o aqui.</small>
+                <strong>{isReading ? 'Lendo o arquivo com segurança…' : 'Escolha um arquivo OFX, CSV ou PDF'}</strong>
+                <small>{isReading ? 'Arquivos PDF podem levar alguns segundos. Nada será enviado para fora.' : 'Baixe o extrato ou a fatura no aplicativo do seu banco e selecione-o aqui.'}</small>
               </button>
-              <input ref={fileRef} className="sr-only" type="file" accept=".ofx,.qfx,.csv,.txt,text/csv,application/x-ofx" onChange={readFile} />
+              <input ref={fileRef} className="sr-only" type="file" accept=".ofx,.qfx,.csv,.txt,.pdf,text/csv,application/x-ofx,application/pdf" onChange={readFile} />
               <div className="import-assurance"><ShieldCheck size={19} /><span><strong>O arquivo não sai deste dispositivo</strong><small>A leitura, categorização e comparação acontecem somente no seu navegador.</small></span></div>
               <section className="rules-box">
                 <header><div><Lightbulb size={18} /><span><strong>Regras automáticas</strong><small>Exemplo: tudo que contém “Uber” vai para Transporte.</small></span></div></header>
@@ -267,6 +287,7 @@ export function ImportPanel({ onClose, onImported }: ImportPanelProps) {
 
           {stage === 'review' && (
             <>
+              <div className="import-file"><FileSpreadsheet size={20} /><span><strong>{fileName}</strong><small>{fileDetails || `${rows.length} linhas reconhecidas`}</small></span></div>
               <div className="import-summary">
                 <div><span><strong>{rows.length}</strong><small>encontrados</small></span><span><strong>{selectedRows.length}</strong><small>selecionados</small></span><span className={duplicateCount ? 'has-warning' : ''}><strong>{duplicateCount}</strong><small>duplicados</small></span></div>
                 <button className="text-button" onClick={() => setRows((current) => current.map((row) => ({ ...row, selected: !row.duplicate })))}>Selecionar sem duplicados</button>

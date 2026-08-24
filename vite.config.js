@@ -10,7 +10,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
+        globPatterns: ['**/*.{js,mjs,css,html,ico,png,svg,json}'],
         maximumFileSizeToCacheInBytes: 3000000,
         cleanupOutdatedCaches: true,
       },
