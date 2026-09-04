@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildImportFingerprint,
+  candidateToTransaction,
   categorizeDescription,
   inferCsvMapping,
   mapCsvRows,
@@ -26,6 +27,12 @@ describe('leitura de valores e datas bancárias', () => {
 });
 
 describe('importação CSV', () => {
+  it('preserva um crédito e seu vínculo ao cartão', () => {
+    const document = parseCsvDocument('Data;Descrição;Valor;Tipo\n03/09/2026;Estorno;25,00;Crédito');
+    const [candidate] = mapCsvRows(document, inferCsvMapping(document));
+    expect(candidateToTransaction(candidate, 'fatura.csv', { cardId: 'card-1', status: 'paid' }))
+      .toMatchObject({ type: 'income', amount: 25, cardId: 'card-1', status: 'paid' });
+  });
   it('ignora linhas de apresentação, infere colunas e converte transações', () => {
     const document = parseCsvDocument([
       'Extrato da conta;;;;',

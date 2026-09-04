@@ -1,11 +1,16 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { CalendarDays, Check, CreditCard, Plus, Repeat2, Trash2, WalletCards, X } from 'lucide-react';
+import { useMemo, useState, type FormEvent } from 'react';
+import { CalendarDays, Check, ChevronDown, CreditCard, Plus, Repeat2, Trash2, WalletCards, X } from 'lucide-react';
+import { Modal } from './Modal';
+import { CategoryIcon } from './CategoryIcon';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../constants/categories';
 import { calculateFixedInstallment, formatCurrency, parseMoneyInput, toDateInput, toLocalIso } from '../lib/finance';
 import type { Card, PaymentSplit, Transaction, TransactionDraft, TransactionStatus, TransactionType } from '../types';
 
 interface TransactionFormProps {
   cards: Card[];
+  initialType?: TransactionType;
+  initialDate?: string;
+  onOpenCards: () => void;
   transaction?: Transaction | null;
   onClose: () => void;
   onCreate: (draft: TransactionDraft) => void;
@@ -30,24 +35,25 @@ const makeSplit = (cardId = '', amount = ''): SplitInput => ({
   interestRate: '',
 });
 
-export function TransactionForm({ cards, transaction, onClose, onCreate, onUpdate }: TransactionFormProps) {
-  const [type, setType] = useState<TransactionType>(transaction?.type ?? 'expense');
+export function TransactionForm({ cards, transaction, initialType = 'expense', initialDate, onOpenCards, onClose, onCreate, onUpdate }: TransactionFormProps) {
+  const [type, setType] = useState<TransactionType>(transaction?.type ?? initialType);
   const [amount, setAmount] = useState(transaction ? String(transaction.amount).replace('.', ',') : '');
   const [description, setDescription] = useState(transaction?.description ?? '');
-  const [date, setDate] = useState(transaction ? toDateInput(transaction.date) : toDateInput(new Date()));
+  const [date, setDate] = useState(transaction ? toDateInput(transaction.date) : initialDate ?? toDateInput(new Date()));
   const [status, setStatus] = useState<TransactionStatus>(transaction?.status ?? 'paid');
   const [categoryLabel, setCategoryLabel] = useState(transaction?.categoryLabel ?? '');
-  const [paymentMode, setPaymentMode] = useState<'cash' | 'card'>(transaction?.cardId ? 'card' : 'cash');
+  const [paymentMode, setPaymentMode] = useState<'cash' | 'card'>(transaction?.cardId && transaction.type === 'expense' ? 'card' : 'cash');
   const [splits, setSplits] = useState<SplitInput[]>([
     makeSplit(transaction?.cardId ?? '', transaction ? String(transaction.amount).replace('.', ',') : ''),
   ]);
   const [repeatMonthly, setRepeatMonthly] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(Boolean(transaction));
   const [error, setError] = useState('');
   const categories = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
   const parsedAmount = parseMoneyInput(amount);
   const selectedCategory = useMemo(
-    () => categories.find((category) => category.label === categoryLabel),
-    [categories, categoryLabel],
+    () => categories.find((category) => category.label === categoryLabel) ?? (transaction?.categoryLabel === categoryLabel ? { label: transaction.categoryLabel, icon: transaction.categoryIcon } : undefined),
+    [categories, categoryLabel, transaction],
   );
   const isSplitPurchase = splits.length > 1;
   const splitTotal = splits.reduce((total, split) => total + parseMoneyInput(split.amount), 0);
@@ -58,11 +64,6 @@ export function TransactionForm({ cards, transaction, onClose, onCreate, onUpdat
     return total + calculateFixedInstallment(principal, rate, split.installments).totalPayable;
   }, 0);
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => event.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onClose]);
 
   const updateSplit = (id: string, changes: Partial<SplitInput>) => {
     setSplits((current) => current.map((split) => split.id === id ? { ...split, ...changes } : split));
@@ -113,12 +114,12 @@ export function TransactionForm({ cards, transaction, onClose, onCreate, onUpdat
       onUpdate(transaction.id, {
         amount: parsedAmount,
         type,
-        status: paymentMode === 'card' ? 'pending' : status,
+        status,
         description: description.trim() || selectedCategory.label,
         categoryLabel: selectedCategory.label,
         categoryIcon: selectedCategory.icon,
         date: toLocalIso(date),
-        cardId: type === 'expense' && paymentMode === 'card' ? firstSplit.cardId : undefined,
+        cardId: type === 'expense' && paymentMode === 'card' ? firstSplit.cardId : type === 'income' && transaction.type === 'income' ? transaction.cardId : undefined,
       });
     } else {
       const cardSplits = normalizedSplits();
@@ -142,34 +143,32 @@ export function TransactionForm({ cards, transaction, onClose, onCreate, onUpdat
   };
 
   return (
-    <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section className="modal transaction-modal" role="dialog" aria-modal="true" aria-labelledby="transaction-title">
+    <Modal className="transaction-modal" labelledBy="transaction-title" onClose={onClose}>
         <header className="modal__header">
-          <div><span className="eyebrow">{transaction ? 'Editar lançamento' : 'Novo lançamento'}</span><h2 id="transaction-title">{transaction ? transaction.description : 'Anote em poucos segundos'}</h2></div>
+          <div><span className="eyebrow">{transaction ? 'Editar lançamento' : 'Novo lançamento'}</span><h2 id="transaction-title">{transaction ? transaction.description : type === 'expense' ? 'Registrar despesa' : 'Registrar receita'}</h2></div>
           <button className="icon-button" onClick={onClose} aria-label="Fechar"><X size={20} /></button>
         </header>
 
         <form onSubmit={submit} className="transaction-form">
           <div className="segmented" aria-label="Tipo do lançamento">
-            <button type="button" className={type === 'expense' ? 'is-active is-expense' : ''} onClick={() => changeType('expense')}>Saída</button>
-            <button type="button" className={type === 'income' ? 'is-active is-income' : ''} onClick={() => changeType('income')}>Entrada</button>
+            <button type="button" className={type === 'expense' ? 'is-active is-expense' : ''} onClick={() => changeType('expense')} aria-pressed={type === 'expense'}>Despesa</button>
+            <button type="button" className={type === 'income' ? 'is-active is-income' : ''} onClick={() => changeType('income')} aria-pressed={type === 'income'}>Receita</button>
           </div>
 
-          <label className="amount-field"><span>{type === 'expense' ? 'Valor total da compra' : 'Valor da entrada'}</span><div><small>R$</small><input autoFocus inputMode="decimal" value={amount} onChange={(event) => { setAmount(event.target.value); setError(''); }} placeholder="0,00" aria-label="Valor" /></div></label>
+          <label className="amount-field"><span>{type === 'expense' ? 'Valor da despesa' : 'Valor da entrada'}</span><div><small>R$</small><input autoFocus data-autofocus inputMode="decimal" value={amount} onChange={(event) => { setAmount(event.target.value); setError(''); }} placeholder="0,00" aria-label="Valor" /></div></label>
 
           <div className="form-grid">
             <label className="field field--wide"><span>Descrição</span><input value={description} onChange={(event) => setDescription(event.target.value)} placeholder={type === 'expense' ? 'Ex.: mercado da semana' : 'Ex.: salário'} maxLength={80} /></label>
-            <label className="field"><span><CalendarDays size={15} /> Data</span><input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
-            {paymentMode === 'cash' && <label className="field"><span>Status</span><select value={status} onChange={(event) => setStatus(event.target.value as TransactionStatus)}><option value="paid">{type === 'income' ? 'Recebido' : 'Pago'}</option><option value="pending">Pendente</option></select></label>}
+
           </div>
 
-          <fieldset className="category-picker"><legend>Categoria</legend><div>{categories.map((category) => <button key={category.id} type="button" className={categoryLabel === category.label ? 'is-selected' : ''} onClick={() => { setCategoryLabel(category.label); setError(''); }}><span aria-hidden="true">{category.icon}</span><small>{category.label}</small></button>)}</div></fieldset>
+          <label className="field category-select"><span>Categoria</span><div><CategoryIcon label={categoryLabel} /><select required value={categoryLabel} onChange={(event) => { setCategoryLabel(event.target.value); setError(''); }}><option value="">Selecione uma categoria</option>{!categories.some((category) => category.label === categoryLabel) && categoryLabel && <option value={categoryLabel}>{categoryLabel}</option>}{categories.map((category) => <option key={category.id} value={category.label}>{category.label}</option>)}</select></div></label>
 
           {type === 'expense' && cards.length > 0 && (
             <section className="payment-section">
               <div className="payment-mode" aria-label="Forma de pagamento">
-                <button type="button" className={paymentMode === 'cash' ? 'is-active' : ''} onClick={() => setPaymentMode('cash')}><WalletCards size={17} /> Pix, débito ou dinheiro</button>
-                <button type="button" className={paymentMode === 'card' ? 'is-active' : ''} onClick={() => { setPaymentMode('card'); setRepeatMonthly(false); }}><CreditCard size={17} /> Cartão de crédito</button>
+                <button type="button" className={paymentMode === 'cash' ? 'is-active' : ''} onClick={() => { setPaymentMode('cash'); if (!transaction) setStatus('paid'); }}><WalletCards size={17} /> Pix, débito ou dinheiro</button>
+                <button type="button" className={paymentMode === 'card' ? 'is-active' : ''} onClick={() => { setPaymentMode('card'); if (!transaction) setStatus('pending'); setRepeatMonthly(false); }}><CreditCard size={17} /> Cartão de crédito</button>
               </div>
 
               {paymentMode === 'card' && (
@@ -199,12 +198,17 @@ export function TransactionForm({ cards, transaction, onClose, onCreate, onUpdat
             </section>
           )}
 
+          <button type="button" className="details-toggle" aria-expanded={detailsOpen} aria-controls="transaction-details" onClick={() => setDetailsOpen(!detailsOpen)}><span>Data, status e recorrência<small>{date.split('-').reverse().join('/')} · {status === 'paid' ? type === 'income' ? 'Recebido' : 'Pago' : 'Pendente'}{repeatMonthly ? ' · Mensal' : ''}</small></span><ChevronDown size={18} /></button>
+          {detailsOpen && <div className="transaction-details" id="transaction-details"><div className="form-grid">
+            <label className="field"><span><CalendarDays size={15} /> Data</span><input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
+            {(paymentMode === 'cash' || transaction) && <label className="field"><span>Status</span><select value={status} onChange={(event) => setStatus(event.target.value as TransactionStatus)}><option value="paid">{type === 'income' ? 'Recebido' : 'Pago'}</option><option value="pending">Pendente</option></select></label>}
+          </div>
           {!transaction && paymentMode === 'cash' && <label className="check-row"><input type="checkbox" checked={repeatMonthly} onChange={(event) => setRepeatMonthly(event.target.checked)} /><span><Repeat2 size={18} /><strong>Repetir por 12 meses</strong><small>Ideal para salário, aluguel e assinaturas.</small></span></label>}
-          {type === 'expense' && cards.length === 0 && <p className="form-hint form-hint--notice">Cadastre seus cartões nas configurações para parcelar ou dividir uma compra.</p>}
+          </div>}
+          {type === 'expense' && cards.length === 0 && <p className="form-hint form-hint--notice"><button type="button" className="text-button" onClick={onOpenCards}><CreditCard size={16} /> Cadastrar cartão para parcelar compras</button></p>}
           {error && <p className="form-error" role="alert">{error}</p>}
-          <footer className="modal__footer"><button type="button" className="button button--ghost" onClick={onClose}>Cancelar</button><button type="submit" className="button button--primary"><Check size={18} /> {transaction ? 'Salvar mudanças' : 'Adicionar lançamento'}</button></footer>
+          <footer className="modal__footer"><button type="button" className="button button--ghost" onClick={onClose}>Cancelar</button><button type="submit" className="button button--primary" aria-label={transaction ? 'Salvar mudanças' : 'Adicionar lançamento'}><Check size={18} /> {transaction ? 'Salvar mudanças' : 'Adicionar'}</button></footer>
         </form>
-      </section>
-    </div>
+    </Modal>
   );
 }

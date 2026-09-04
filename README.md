@@ -4,6 +4,17 @@
 
 O surReal ajuda a registrar entradas e saídas, acompanhar pendências, organizar cartões, parcelamentos, empréstimos, investimentos, limites mensais e metas financeiras. Não exige conta, conexão bancária ou envio dos lançamentos para um servidor: os dados ficam no navegador do próprio dispositivo.
 
+## Interface e navegação
+
+- Painel com evolução do resultado mensal e atalhos para receitas, despesas, importação e cartões
+- Agenda com contas atrasadas e compromissos dos próximos 30 dias, independentemente do mês selecionado
+- Lançamento simplificado, com data, status e recorrência em opções adicionais
+- Busca em todo o histórico e filtro por cartão
+- Exclusão de lançamentos com opção de desfazer durante 8 segundos
+- Configurações divididas em perfil, cartões e dados
+- Diálogos com navegação por teclado, foco contido, Escape e retorno do foco ao fechar
+- Temas claro/escuro e animações que respeitam a preferência por movimento reduzido
+
 ## O que já funciona
 
 - Resumo mensal de entradas, saídas, pendências e resultado projetado

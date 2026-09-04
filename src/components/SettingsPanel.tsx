@@ -1,11 +1,13 @@
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { CreditCard, Download, FileDown, FileUp, HardDrive, Moon, Plus, ShieldCheck, Sun, Trash2, Upload, UserRound, X } from 'lucide-react';
+import { Modal } from './Modal';
 import { CARD_PRESETS } from '../constants/cardPresets';
 import { parseBackup } from '../lib/finance';
 import { useStore } from '../store/useStore';
 import type { BackupData, Card } from '../types';
 
-interface SettingsPanelProps { onClose: () => void; onOpenImporter: () => void }
+export type SettingsSection = 'profile' | 'cards' | 'data';
+interface SettingsPanelProps { initialSection?: SettingsSection; onClose: () => void; onOpenImporter: () => void }
 
 const downloadFile = (name: string, content: string, type: string) => {
   const url = URL.createObjectURL(new Blob([content], { type }));
@@ -18,8 +20,9 @@ const downloadFile = (name: string, content: string, type: string) => {
 
 const csvCell = (value: unknown) => `"${String(value ?? '').replace(/"/g, '""')}"`;
 
-export function SettingsPanel({ onClose, onOpenImporter }: SettingsPanelProps) {
+export function SettingsPanel({ onClose, onOpenImporter, initialSection = 'profile' }: SettingsPanelProps) {
   const store = useStore();
+  const [section, setSection] = useState<SettingsSection>(initialSection);
   const [name, setName] = useState(store.userName);
   const [bankName, setBankName] = useState('');
   const [dueDay, setDueDay] = useState('10');
@@ -28,11 +31,6 @@ export function SettingsPanel({ onClose, onOpenImporter }: SettingsPanelProps) {
   const [message, setMessage] = useState('');
   const importRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => event.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onClose]);
 
   const saveProfile = () => {
     store.setUserName(name);
@@ -125,29 +123,26 @@ export function SettingsPanel({ onClose, onOpenImporter }: SettingsPanelProps) {
   };
 
   return (
-    <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section className="modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <Modal className="settings-modal" labelledBy="settings-title" onClose={onClose}>
         <header className="modal__header">
-          <div><span className="eyebrow">Preferências e segurança</span><h2 id="settings-title">Seu espaço</h2></div>
+          <div><span className="eyebrow">Preferências e segurança</span><h2 id="settings-title">Configurações</h2></div>
           <button className="icon-button" onClick={onClose} aria-label="Fechar"><X size={20} /></button>
         </header>
 
-        <div className="settings-content">
-          <section className="settings-section">
+        <nav className="settings-tabs" aria-label="Seções das configurações">{([{ id: 'profile', label: 'Perfil', icon: <UserRound size={17} /> }, { id: 'cards', label: 'Cartões', icon: <CreditCard size={17} /> }, { id: 'data', label: 'Seus dados', icon: <HardDrive size={17} /> }] as const).map((item) => <button key={item.id} className={section === item.id ? 'is-active' : ''} aria-pressed={section === item.id} onClick={() => { setSection(item.id); setMessage(''); }}>{item.icon}{item.label}</button>)}</nav>
+        <div className="settings-content" key={section}>
+          {section === 'profile' && <section className="settings-section">
             <div className="settings-section__title"><UserRound size={20} /><div><h3>Perfil e aparência</h3><p>Deixe o app com a sua cara.</p></div></div>
             <div className="form-grid">
               <label className="field"><span>Como quer ser chamado?</span><input value={name} onChange={(event) => setName(event.target.value)} placeholder="Seu nome ou apelido" /></label>
               <div className="field"><span>Tema</span><div className="theme-switch"><button className={store.theme === 'light' ? 'is-active' : ''} onClick={() => store.setTheme('light')}><Sun size={16} /> Claro</button><button className={store.theme === 'dark' ? 'is-active' : ''} onClick={() => store.setTheme('dark')}><Moon size={16} /> Escuro</button></div></div>
             </div>
             <button className="button button--secondary" onClick={saveProfile}>Salvar preferências</button>
-          </section>
+          </section>}
 
-          <section className="settings-section">
+          {section === 'cards' && <section className="settings-section">
             <div className="settings-section__title"><CreditCard size={20} /><div><h3>Cartões</h3><p>Use cartões para lançar e parcelar compras.</p></div></div>
-            <div className="card-presets" aria-label="Cartões predefinidos">
-              {CARD_PRESETS.map((preset) => <button key={preset.id} type="button" className={selectedPresetId === preset.id ? 'is-selected' : ''} onClick={() => { setSelectedPresetId(preset.id); setBankName(preset.name); }}><span style={{ background: preset.color, color: preset.textColor }}>{preset.shortName}</span><small>{preset.name}</small></button>)}
-              <button type="button" className={selectedPresetId === 'custom' ? 'is-selected' : ''} onClick={() => { setSelectedPresetId('custom'); setBankName(''); }}><span className="custom-card-mark">+</span><small>Outro</small></button>
-            </div>
+            <label className="field"><span>Banco ou cartão</span><select value={selectedPresetId} onChange={(event) => { setSelectedPresetId(event.target.value); setBankName(CARD_PRESETS.find((preset) => preset.id === event.target.value)?.name ?? ''); }}><option value="">Selecione para adicionar</option>{CARD_PRESETS.map((preset) => <option key={preset.id} value={preset.id}>{preset.name}</option>)}<option value="custom">Outro cartão</option></select></label>
             {store.cards.length > 0 && <div className="card-list">{store.cards.map((card) => <div key={card.id}><span><i className="card-dot" style={{ background: card.accentColor ?? '#183b34' }} /><CreditCard size={17} /><strong>{card.bankName}</strong><small>Fecha dia {card.closingDay ?? '—'} · vence dia {card.dueDay}</small></span><button className="icon-button icon-button--danger" onClick={() => window.confirm(`Excluir ${card.bankName}?`) && store.deleteCard(card.id)} aria-label={`Excluir ${card.bankName}`}><Trash2 size={17} /></button></div>)}</div>}
             <form className="inline-form" onSubmit={addCard}>
               <label className="field"><span>Nome do cartão</span><input value={bankName} onChange={(event) => setBankName(event.target.value)} placeholder="Ex.: Nubank" /></label>
@@ -155,9 +150,9 @@ export function SettingsPanel({ onClose, onOpenImporter }: SettingsPanelProps) {
               <label className="field field--small"><span>Vencimento</span><input type="number" min="1" max="31" value={dueDay} onChange={(event) => setDueDay(event.target.value)} /></label>
               <button className="button button--secondary" type="submit" disabled={!bankName.trim()}><Plus size={17} /> Adicionar</button>
             </form>
-          </section>
+          </section>}
 
-          <section className="settings-section">
+          {section === 'data' && <section className="settings-section">
             <div className="settings-section__title"><HardDrive size={20} /><div><h3>Seus dados</h3><p>Ficam apenas neste navegador. Faça backup antes de trocar de aparelho.</p></div></div>
             <div className="settings-actions">
               <button className="button button--secondary" onClick={onOpenImporter}><FileUp size={17} /> Importar OFX/CSV/PDF</button>
@@ -168,11 +163,10 @@ export function SettingsPanel({ onClose, onOpenImporter }: SettingsPanelProps) {
             </div>
             <div className="privacy-note"><ShieldCheck size={19} /><span><strong>Privacidade local</strong><small>Nenhum lançamento financeiro é enviado para uma conta ou servidor pelo aplicativo.</small></span></div>
             <button className="danger-link" onClick={clearData}><Trash2 size={16} /> Apagar todos os dados deste dispositivo</button>
-          </section>
+          </section>}
 
           {message && <p className="settings-message" role="status">{message}</p>}
         </div>
-      </section>
-    </div>
+    </Modal>
   );
 }

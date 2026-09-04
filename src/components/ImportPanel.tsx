@@ -1,3 +1,4 @@
+import { Modal } from './Modal';
 import { useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { ArrowLeft, CheckCircle2, FileSpreadsheet, FileUp, Lightbulb, Plus, ShieldCheck, Trash2, Upload, X } from 'lucide-react';
 import { CATEGORIES, EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../constants/categories';
@@ -28,7 +29,7 @@ interface ImportPanelProps {
 
 type Stage = 'upload' | 'mapping' | 'review' | 'success';
 type AmountMode = 'single' | 'separate';
-type ReviewCandidate = ImportCandidate & { selected: boolean; duplicate: boolean; originalType: TransactionType };
+type ReviewCandidate = ImportCandidate & { selected: boolean; duplicate: boolean };
 
 const emptyMapping: CsvMapping = { date: -1, description: -1, amount: -1, debit: -1, credit: -1, type: -1 };
 
@@ -90,7 +91,7 @@ export function ImportPanel({ onClose, onImported }: ImportPanelProps) {
     setRows(candidates.map((candidate) => {
       const duplicate = seen.has(candidate.fingerprint);
       seen.add(candidate.fingerprint);
-      return { ...candidate, duplicate, selected: !duplicate, originalType: candidate.type };
+      return { ...candidate, duplicate, selected: !duplicate };
     }));
     setStage('review');
     setError('');
@@ -167,12 +168,7 @@ export function ImportPanel({ onClose, onImported }: ImportPanelProps) {
   const changeImportOrigin = (cardId: string) => {
     setDestinationCardId(cardId);
     setImportStatus(cardId ? 'pending' : 'paid');
-    setRows((current) => current.map((row) => {
-      const type: TransactionType = cardId ? 'expense' : row.originalType;
-      const category = categorizeDescription(row.description, type, store.importRules);
-      const fingerprint = buildImportFingerprint(row.date, row.description, row.amount, type, row.externalId);
-      return { ...row, type, categoryLabel: category.label, categoryIcon: category.icon, fingerprint, duplicate: existingFingerprints.has(fingerprint) };
-    }));
+    // Changing the destination must preserve credits, refunds, and manual corrections.
   };
 
   const addRule = (event: FormEvent) => {
@@ -225,8 +221,7 @@ export function ImportPanel({ onClose, onImported }: ImportPanelProps) {
   };
 
   return (
-    <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section className="modal import-modal" role="dialog" aria-modal="true" aria-labelledby="import-title">
+    <Modal className="import-modal" labelledBy="import-title" onClose={onClose}>
         <header className="modal__header">
           <div><span className="eyebrow">Importação privada</span><h2 id="import-title">{stage === 'success' ? 'Extrato importado' : 'Trazer extrato'}</h2></div>
           <button className="icon-button" onClick={onClose} aria-label="Fechar"><X size={20} /></button>
@@ -244,11 +239,11 @@ export function ImportPanel({ onClose, onImported }: ImportPanelProps) {
               <div className="import-assurance"><ShieldCheck size={19} /><span><strong>O arquivo não sai deste dispositivo</strong><small>A leitura, categorização e comparação acontecem somente no seu navegador.</small></span></div>
               <section className="rules-box">
                 <header><div><Lightbulb size={18} /><span><strong>Regras automáticas</strong><small>Exemplo: tudo que contém “Uber” vai para Transporte.</small></span></div></header>
-                {store.importRules.length > 0 && <div className="rule-list">{store.importRules.map((rule) => <div key={rule.id}><span><strong>“{rule.keyword}”</strong><small>{rule.categoryIcon} {rule.categoryLabel} · {rule.transactionType === 'income' ? 'entrada' : 'saída'}</small></span><button className="icon-button icon-button--danger" onClick={() => store.deleteImportRule(rule.id)} aria-label={`Excluir regra ${rule.keyword}`}><Trash2 size={15} /></button></div>)}</div>}
+                {store.importRules.length > 0 && <div className="rule-list">{store.importRules.map((rule) => <div key={rule.id}><span><strong>“{rule.keyword}”</strong><small>{rule.categoryLabel} · {rule.transactionType === 'income' ? 'entrada' : 'saída'}</small></span><button className="icon-button icon-button--danger" onClick={() => store.deleteImportRule(rule.id)} aria-label={`Excluir regra ${rule.keyword}`}><Trash2 size={15} /></button></div>)}</div>}
                 <form className="rule-form" onSubmit={addRule}>
                   <label className="field"><span>Quando contiver</span><input value={ruleKeyword} onChange={(event) => setRuleKeyword(event.target.value)} placeholder="Ex.: Uber" /></label>
                   <label className="field"><span>Tipo</span><select value={ruleType} onChange={(event) => { const type = event.target.value as TransactionType; setRuleType(type); setRuleCategory((type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES)[0]?.label ?? ''); }}><option value="expense">Saída</option><option value="income">Entrada</option></select></label>
-                  <label className="field"><span>Categoria</span><select value={ruleCategory} onChange={(event) => setRuleCategory(event.target.value)}>{ruleCategories.map((category) => <option key={category.id} value={category.label}>{category.icon} {category.label}</option>)}</select></label>
+                  <label className="field"><span>Categoria</span><select value={ruleCategory} onChange={(event) => setRuleCategory(event.target.value)}>{ruleCategories.map((category) => <option key={category.id} value={category.label}>{category.label}</option>)}</select></label>
                   <button className="button button--secondary" type="submit" disabled={!ruleKeyword.trim()}><Plus size={16} /> Criar</button>
                 </form>
               </section>
@@ -306,7 +301,7 @@ export function ImportPanel({ onClose, onImported }: ImportPanelProps) {
                       <label className="import-date"><span className="sr-only">Data</span><input type="date" value={row.date.slice(0, 10)} onChange={(event) => updateRow(row.id, { date: `${event.target.value}T12:00:00.000` })} /></label>
                       <label className="import-description"><span className="sr-only">Descrição</span><input value={row.description} onChange={(event) => updateRow(row.id, { description: event.target.value })} />{row.duplicate && <small>Possível duplicado</small>}</label>
                       <select className={`import-type is-${row.type}`} value={row.type} onChange={(event) => changeRowType(row, event.target.value as TransactionType)} aria-label={`Tipo de ${row.description}`}><option value="expense">Saída</option><option value="income">Entrada</option></select>
-                      <select className="import-category" value={row.categoryLabel} onChange={(event) => changeRowCategory(row, event.target.value)} aria-label={`Categoria de ${row.description}`}>{categories.map((category) => <option key={category.id} value={category.label}>{category.icon} {category.label}</option>)}</select>
+                      <select className="import-category" value={row.categoryLabel} onChange={(event) => changeRowCategory(row, event.target.value)} aria-label={`Categoria de ${row.description}`}>{categories.map((category) => <option key={category.id} value={category.label}>{category.label}</option>)}</select>
                       <label className="import-amount"><span>R$</span><input type="number" min="0.01" step="0.01" inputMode="decimal" value={row.amount} onChange={(event) => { const amount = Number(event.target.value); if (Number.isFinite(amount)) updateRow(row.id, { amount: Math.abs(amount) }); }} /></label>
                     </article>
                   );
@@ -328,7 +323,6 @@ export function ImportPanel({ onClose, onImported }: ImportPanelProps) {
 
           {error && stage === 'upload' && <p className="form-error" role="alert">{error}</p>}
         </div>
-      </section>
-    </div>
+    </Modal>
   );
 }

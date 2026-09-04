@@ -321,7 +321,7 @@ export const candidateToTransaction = (candidate: ImportCandidate, source: strin
   categoryLabel: candidate.categoryLabel,
   categoryIcon: candidate.categoryIcon,
   date: candidate.date,
-  cardId: candidate.type === 'expense' ? options?.cardId || undefined : undefined,
+  cardId: options?.cardId || undefined,
   importFingerprint: candidate.fingerprint,
   importSource: source,
   externalId: candidate.externalId,
