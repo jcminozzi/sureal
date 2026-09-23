@@ -1,4 +1,4 @@
--- Run in Supabase SQL editor before enabling accounts.
+-- Initial account and cloud-backup schema.
 create table public.financial_backups (
   user_id uuid primary key references auth.users(id) on delete cascade,
   payload jsonb not null check (octet_length(payload::text) <= 1500000),
