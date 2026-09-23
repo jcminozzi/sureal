@@ -25,6 +25,22 @@ describe('account API boundaries', () => {
     const response = await handler(new Request('https://surreal.example/.netlify/functions/account?action=cloud'));
     expect(response.status).toBe(401); expect(fetchMock).not.toHaveBeenCalled();
   });
+  it('uses the default Supabase magic link and returns it to the configured app origin', async () => {
+    vi.stubEnv('SUPABASE_URL', 'https://supabase.example'); vi.stubEnv('SUPABASE_ANON_KEY', 'test'); vi.stubEnv('APP_URL', 'https://surreal.example/app');
+    const fetchMock = vi.fn().mockResolvedValue(new Response('{}', { status: 200 })); vi.stubGlobal('fetch', fetchMock);
+    const response = await handler(new Request('https://surreal.example/.netlify/functions/account?action=send-link', { method: 'POST', headers: { Origin: 'https://surreal.example', 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'test@example.com' }) }));
+    expect(response.status).toBe(200);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({ email: 'test@example.com', email_redirect_to: 'https://surreal.example/?account=1' });
+  });
+  it('validates a magic-link token before putting it in the secure session cookie', async () => {
+    vi.stubEnv('SUPABASE_URL', 'https://supabase.example'); vi.stubEnv('SUPABASE_ANON_KEY', 'test'); vi.stubEnv('APP_URL', 'https://surreal.example');
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: 'user-1', email: 'test@example.com' }), { status: 200 })); vi.stubGlobal('fetch', fetchMock);
+    const token = 'a'.repeat(64);
+    const response = await handler(new Request('https://surreal.example/.netlify/functions/account?action=adopt-session', { method: 'POST', headers: { Origin: 'https://surreal.example', 'Content-Type': 'application/json' }, body: JSON.stringify({ accessToken: token }) }));
+    expect(response.status).toBe(200);
+    expect(response.headers.get('set-cookie')).toContain('__Host-surreal-session=');
+    expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe(`Bearer ${token}`);
+  });
   it('requires active membership before storing a cloud backup', async () => {
     vi.stubEnv('SUPABASE_URL', 'https://supabase.example'); vi.stubEnv('SUPABASE_ANON_KEY', 'test'); vi.stubEnv('APP_URL', 'https://surreal.example'); vi.stubEnv('BILLING_ENABLED', 'false');
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: 'user-1', email: 'test@example.com' }), { status: 200 })); vi.stubGlobal('fetch', fetchMock);

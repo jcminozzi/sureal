@@ -19,7 +19,6 @@ export function AccountPanel({ onClose }: { onClose: () => void }) {
   const [configuration, setConfiguration] = useState<Configuration | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(true);
   const [message, setMessage] = useState('');
@@ -30,6 +29,12 @@ export function AccountPanel({ onClose }: { onClose: () => void }) {
         const config = await api<Configuration>('config');
         if (!ignore) setConfiguration(config);
         if (config.accounts) {
+          const fragment = new URLSearchParams(window.location.hash.slice(1));
+          const accessToken = fragment.get('access_token');
+          const authError = fragment.get('error_description');
+          if (accessToken || authError) window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+          if (authError) throw new Error(decodeURIComponent(authError.replace(/\+/g, ' ')));
+          if (accessToken) await api('adopt-session', { accessToken });
           const account = await api<Session>('session').catch(() => null);
           if (!ignore) setSession(account);
         }
@@ -48,8 +53,9 @@ export function AccountPanel({ onClose }: { onClose: () => void }) {
   const login = (event: FormEvent) => {
     event.preventDefault();
     void run(async () => {
-      if (!sent) { await api('send-code', { email }); setSent(true); setMessage('Confira seu e-mail e digite o código recebido.'); }
-      else { await api('verify-code', { email, code }); setSession(await api<Session>('session')); setCode(''); }
+      await api('send-link', { email });
+      setSent(true);
+      setMessage('Enviamos um link de acesso. Abra o e-mail neste navegador para entrar.');
     });
   };
   const upload = () => void run(async () => {
@@ -77,7 +83,7 @@ export function AccountPanel({ onClose }: { onClose: () => void }) {
   return <Modal labelledBy="account-title" onClose={onClose} className="settings-modal"><header className="modal__header"><div><span className="eyebrow">Seu espaço</span><h2 id="account-title">Conta e assinatura</h2></div><button className="icon-button" onClick={onClose} aria-label="Fechar conta"><X size={20} /></button></header><div className="account-content">
     {busy && <p role="status">Aguarde um instante…</p>}
     {!configuration?.accounts && !busy && <div className="account-info"><ShieldCheck size={26} /><h3>Seu controle financeiro já está disponível</h3><p>Use os gráficos, orçamentos e importações neste dispositivo. Contas online e assinaturas ainda não estão abertas.</p><p>Para guardar uma cópia dos seus registros, use Configurações → Seus dados → Exportar backup.</p></div>}
-    {configuration?.accounts && !session && <form className="account-form" onSubmit={login}><Mail size={28} /><h3>Seu dinheiro, no seu espaço</h3><p>Entre ou crie sua conta usando um código por e-mail. Os dados locais só vão para a nuvem quando você escolher salvar uma cópia.</p><label className="field"><span>E-mail</span><input data-autofocus type="email" autoComplete="email" maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} required disabled={sent || busy} /></label>{sent && <label className="field"><span>Código recebido</span><input inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6,8}" minLength={6} maxLength={8} value={code} onChange={(event) => setCode(event.target.value)} required disabled={busy} /></label>}<button className="button button--primary" disabled={busy}>{sent ? 'Entrar na conta' : 'Receber código'}</button>{sent && <button className="text-button" type="button" disabled={busy} onClick={() => { setSent(false); setCode(''); }}>Usar outro e-mail ou reenviar código</button>}</form>}
+    {configuration?.accounts && !session && <form className="account-form" onSubmit={login}><Mail size={28} /><h3>Seu dinheiro, no seu espaço</h3><p>Entre ou crie sua conta usando um link enviado por e-mail. Os dados locais só vão para a nuvem quando você escolher salvar uma cópia.</p><label className="field"><span>E-mail</span><input data-autofocus type="email" autoComplete="email" maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} required disabled={sent || busy} /></label><button className="button button--primary" disabled={busy}>{sent ? 'Reenviar link de acesso' : 'Enviar link de acesso'}</button>{sent && <button className="text-button" type="button" disabled={busy} onClick={() => setSent(false)}>Usar outro e-mail</button>}</form>}
     {session && <><div className="account-identity"><span><strong>{session.email}</strong><small>{session.active ? 'Plano Pro ativo' : 'Conta gratuita'}{session.cancelAtPeriodEnd ? ' · cancelamento agendado' : ''}</small></span><button className="icon-button" disabled={busy} title="Sair" aria-label="Sair da conta" onClick={() => void run(async () => { await api('logout', {}); setSession(null); setSent(false); setMessage('Sessão encerrada. Os dados locais continuam neste dispositivo.'); })}><LogOut size={19} /></button></div>
       <section className="account-plan"><span className="eyebrow">surReal Pro</span><h3>Uma cópia segura para levar com você</h3><p>Salve seu backup na nuvem e restaure em outro dispositivo. Você escolhe quando enviar e restaurar os dados.</p>{price && <strong className="account-price">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: price.currency }).format(price.amount)}<small> / {price.intervalCount > 1 ? `${price.intervalCount} ` : ''}{interval}</small></strong>}{configuration?.billing ? <button className="button button--primary" disabled={busy} onClick={() => billing(session.active ? 'portal' : 'checkout')}><CreditCard size={17} />{session.active ? 'Gerenciar assinatura' : 'Ver checkout seguro'}</button> : <p>Assinaturas ainda não disponíveis.</p>}<small>A IA pela Puter usa a franquia da sua conta Puter e não está incluída neste plano. O plano não sincroniza alterações automaticamente.</small></section>
       {session.hasBillingAccount && <button className="text-button" disabled={busy} onClick={() => billing('portal')}>Pagamentos, faturas e cancelamento</button>}

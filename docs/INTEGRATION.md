@@ -11,7 +11,7 @@ Há código para autenticação por código de e-mail, backup manual na nuvem, c
 ## Configuração
 
 1. Crie um projeto Supabase e execute `supabase/migrations/001_accounts.sql` no editor SQL. Use projeto de teste primeiro. A migração não deve ser executada novamente sem verificar as tabelas existentes.
-2. Ative login por e-mail. Configure SMTP próprio, remetente e limites de envio. No template de e-mail de Magic Link, mostre o código `{{ .Token }}`: a interface pede um código, não usa o link de redirecionamento. Teste novo usuário e usuário já existente. A sessão dura até uma hora, exigindo novo código após expirar.
+2. Ative login por e-mail e configure a Site URL para a origem HTTPS do aplicativo. O fluxo inicial usa o Magic Link padrão do Supabase e não exige editar o template. Teste novo usuário, usuário existente, link expirado e link já utilizado. A sessão do surReal dura até uma hora, exigindo novo link após expirar. Antes de abrir ao público, configure SMTP próprio, remetente verificado e limites de envio.
 3. Crie produto e preço recorrente no Stripe em modo de teste. Configure o Customer Portal com cancelamento, atualização de pagamento e histórico de faturas. O preço mostrado no app vem desse preço no Stripe; não é uma promessa fixa de R$ 19,90.
 4. Configure as variáveis de `.env.example` no Netlify, com escopo de Functions. Nunca use `VITE_` para segredos. `APP_URL` deve ser a origem HTTPS exata usada pelos clientes. O cookie Secure exige HTTPS. Não use a origem de produção para validar um deploy de preview.
 5. Mantenha `BILLING_ENABLED=false` até terminar os testes. A conta Stripe e o portal de cobrança são diferentes da conta Puter.

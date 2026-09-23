@@ -82,17 +82,19 @@ export default async function handler(request) {
     }
     if (!configured()) return json({ error: 'Contas online ainda não estão disponíveis. Seus dados locais continuam acessíveis.' }, 503);
     if (action === 'logout' && request.method === 'POST') return json({ ok: true }, 200, { 'Set-Cookie': sessionCookie('', 0) });
-    if (['send-code', 'verify-code'].includes(action) && request.method === 'POST') {
+    if (action === 'send-link' && request.method === 'POST') {
       const body = await bodyOf(request, 2048);
       if (typeof body.email !== 'string' || body.email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) fail(400, 'Informe um e-mail válido.');
-      if (action === 'send-code') {
-        await supabase('/auth/v1/otp', { method: 'POST', body: JSON.stringify({ email: body.email, create_user: true }) });
-        return json({ ok: true });
-      }
-      if (typeof body.code !== 'string' || !/^\d{6,8}$/.test(body.code)) fail(400, 'Confira o código recebido.');
-      const session = await supabase('/auth/v1/verify', { method: 'POST', body: JSON.stringify({ email: body.email, token: body.code, type: 'email' }) });
-      if (!session.access_token || !session.user) fail(401, 'Código inválido ou expirado.');
-      return json({ email: session.user.email }, 200, { 'Set-Cookie': sessionCookie(session.access_token, session.expires_in) });
+      const redirectTo = `${new URL(process.env.APP_URL).origin}/?account=1`;
+      await supabase('/auth/v1/otp', { method: 'POST', body: JSON.stringify({ email: body.email, create_user: true, email_redirect_to: redirectTo }) });
+      return json({ ok: true });
+    }
+    if (action === 'adopt-session' && request.method === 'POST') {
+      const body = await bodyOf(request, 8192);
+      if (typeof body.accessToken !== 'string' || body.accessToken.length < 40 || body.accessToken.length > 8000) fail(400, 'Link de acesso inválido.');
+      const user = await supabase('/auth/v1/user', {}, body.accessToken);
+      if (!user?.id || !user.email) fail(401, 'O link de acesso expirou ou já foi usado.');
+      return json({ email: user.email }, 200, { 'Set-Cookie': sessionCookie(body.accessToken, 3600) });
     }
     const { user, token } = await identity(request);
     if (action === 'session' && request.method === 'GET') {
