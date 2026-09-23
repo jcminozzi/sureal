@@ -4,4 +4,7 @@ dist/
 .DS_Store
 *.local
 *.log
-
+.env
+.env.*
+!.env.example
+.netlify/

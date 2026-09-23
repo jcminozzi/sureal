@@ -61,6 +61,12 @@ Os dados financeiros são armazenados localmente no IndexedDB, com fallback para
 
 ## Desenvolvimento
 
+### Contas, assinatura e nuvem
+
+O painel inclui comparação interativa de seis meses, distribuição de gastos e primeiros passos guiados. A área **Minha conta** suporta integração opcional com Supabase e Stripe por Netlify Functions. Sem configuração, o aplicativo continua local e não oferece checkout.
+
+Leia [o guia de integração](docs/INTEGRATION.md) para configurar os serviços, executar a migração e testar a cobrança antes de habilitá-la. O backup na nuvem desta versão é manual; IA pela Puter não está incluída no plano.
+
 Requisitos: Node.js 20 ou mais recente.
 
 ```bash

@@ -9,7 +9,7 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ['src/**/*.{ts,tsx}', 'vite.config.js'],
+    files: ['src/**/*.{ts,tsx}', 'vite.config.js', 'netlify/functions/**/*.mjs'],
     languageOptions: {
       ecmaVersion: 2022,
       globals: { ...globals.browser, ...globals.node },
@@ -25,4 +25,3 @@ export default tseslint.config(
     },
   },
 );
-

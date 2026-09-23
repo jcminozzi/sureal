@@ -35,6 +35,9 @@ describe('financial assistant', () => {
   });
 
   it('rejects unsafe or nonexistent action targets', () => {
+    expect(actionFromToolCall('create_goal', { name: 'Reserva', target: Infinity }, input())).toBeNull();
+    expect(actionFromToolCall('add_transaction', { amount: 100, type: 'expense', status: 'paid', date: '2026-02-31' }, input())).toBeNull();
+    expect(actionFromToolCall('mark_transaction', { transactionId: 'tx-1', status: 'inventado' }, input())).toBeNull();
     expect(actionFromToolCall('set_budget', { categoryLabel: 'Categoria inventada', amount: 100 }, input())).toBeNull();
     expect(actionFromToolCall('add_goal_progress', { goalId: 'missing', amount: 100 }, input())).toBeNull();
     expect(actionFromToolCall('mark_transaction', { transactionId: 'missing', status: 'paid' }, input())).toBeNull();

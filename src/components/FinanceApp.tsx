@@ -16,6 +16,7 @@ import { SettingsPanel, type SettingsSection } from './SettingsPanel';
 import { CategoryIcon } from './CategoryIcon';
 import { Dashboard } from './Dashboard';
 import { AssistantView } from './AssistantView';
+import { AccountPanel } from './AccountPanel';
 import { TransactionForm } from './TransactionForm';
 import { WealthView } from './WealthView';
 
@@ -120,7 +121,8 @@ function GoalCard({ goal, hidden, onUpdate, onDelete }: {
 
 export function FinanceApp() {
   const store = useStore();
-  const [view, setView] = useState<View>('assistant');
+  const [view, setView] = useState<View>('overview');
+  const [accountOpen, setAccountOpen] = useState(() => new URLSearchParams(window.location.search).has('account'));
   const [transactionModal, setTransactionModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [settingsSection, setSettingsSection] = useState<SettingsSection | null>(null);
@@ -194,8 +196,8 @@ export function FinanceApp() {
   }
 
   const navItems: { id: View; label: string; icon: React.ReactNode }[] = [
-    { id: 'assistant', label: 'surReal IQ', icon: <Sparkles size={19} /> },
     { id: 'overview', label: 'Visão geral', icon: <LayoutDashboard size={19} /> },
+    { id: 'assistant', label: 'surReal IQ', icon: <Sparkles size={19} /> },
     { id: 'transactions', label: 'Lançamentos', icon: <ListFilter size={19} /> },
     { id: 'budgets', label: 'Orçamento', icon: <Gauge size={19} /> },
     { id: 'goals', label: 'Metas', icon: <Target size={19} /> },
@@ -218,6 +220,7 @@ export function FinanceApp() {
         <header className="topbar">
           <div><p>Finanças pessoais <span>/</span> {navItems.find((item) => item.id === view)?.label}</p><h1>{navItems.find((item) => item.id === view)?.label}</h1></div>
           <div className="topbar__actions">
+            <button className="button button--secondary account-open" aria-label="Minha conta" title="Minha conta" onClick={() => setAccountOpen(true)}><Wallet size={18} /><span>Minha conta</span></button>
             <button className="icon-button" onClick={() => store.setIsPrivacyMode(!store.isPrivacyMode)} aria-label={store.isPrivacyMode ? 'Mostrar valores' : 'Ocultar valores'} title={store.isPrivacyMode ? 'Mostrar valores' : 'Ocultar valores'}>{store.isPrivacyMode ? <EyeOff size={20} /> : <Eye size={20} />}</button>
             <button className="icon-button theme-toggle" onClick={() => store.setTheme(store.theme === 'light' ? 'dark' : 'light')} aria-label={store.theme === 'light' ? 'Usar tema escuro' : 'Usar tema claro'}>{store.theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}</button>
             <button className="icon-button settings-mobile" onClick={() => setSettingsSection('profile')} aria-label="Abrir configurações"><Settings size={20} /></button>
@@ -280,6 +283,7 @@ export function FinanceApp() {
       {transactionModal && <TransactionForm initialType={initialType} initialDate={format(isSameMonth(store.currentDate, new Date()) ? new Date() : store.currentDate, 'yyyy-MM-dd')} onOpenCards={() => setSettingsSection('cards')} cards={store.cards} transaction={editingTransaction} onClose={() => { setTransactionModal(false); setEditingTransaction(null); }} onCreate={createTransaction} onUpdate={(id, changes) => { store.updateTransaction(id, changes); setNotice({ message: 'Lançamento atualizado.' }); }} />}
       {importOpen && <Suspense fallback={<div className="toast" role="status">Abrindo importação…</div>}><ImportPanel onClose={() => setImportOpen(false)} onImported={() => { setImportOpen(false); setView('transactions'); setSearch(''); setTypeFilter('all'); setStatusFilter('all'); setCardFilter(''); setAllMonths(false); }} /></Suspense>}
       {settingsSection && <SettingsPanel initialSection={settingsSection} onClose={() => setSettingsSection(null)} onOpenImporter={() => { setSettingsSection(null); setImportOpen(true); }} />}
+      {accountOpen && <AccountPanel onClose={() => { setAccountOpen(false); const url = new URL(window.location.href); url.searchParams.delete('account'); window.history.replaceState(null, '', url); }} />}
       {notice && <div className="toast" role="status"><span className="toast-icon"><Check size={17} /></span><span>{notice.message}</span>{notice.undo && <button onClick={() => { notice.undo?.(); setNotice({ message: 'Ação desfeita.' }); }}>Desfazer</button>}<button className="toast-close" aria-label="Fechar aviso" onClick={() => setNotice(null)}><X size={17} /></button></div>}
     </div>
   );

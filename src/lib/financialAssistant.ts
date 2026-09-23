@@ -1,4 +1,4 @@
-import { endOfMonth, format, isAfter, isBefore, parseISO, startOfMonth } from 'date-fns';
+import { endOfMonth, format, isBefore, isValid, parseISO, startOfDay, startOfMonth } from 'date-fns';
 import { CATEGORIES } from '../constants/categories';
 import { calculateSummary, getCategorySpending, isTransactionInMonth, toLocalIso } from './finance';
 import type { Budgets, Goal, Transaction, TransactionStatus, TransactionType } from '../types';
@@ -35,7 +35,7 @@ export function buildFinancialSnapshot(input: FinancialAssistantInput) {
   const categorySpending = getCategorySpending(selected);
   const monthStart = startOfMonth(input.currentDate);
   const monthEnd = endOfMonth(input.currentDate);
-  const today = new Date();
+  const today = startOfDay(new Date());
   const overdue = input.transactions.filter((item) => {
     if (item.status !== 'pending') return false;
     try { return isBefore(parseISO(item.date), today); } catch { return false; }
@@ -44,7 +44,7 @@ export function buildFinancialSnapshot(input: FinancialAssistantInput) {
     if (item.status !== 'pending') return false;
     try {
       const date = parseISO(item.date);
-      return isAfter(date, today) && isBefore(date, new Date(today.getTime() + 31 * 86400000));
+      return !isBefore(date, today) && isBefore(date, new Date(today.getTime() + 31 * 86400000));
     } catch { return false; }
   });
   const recent = [...input.transactions]
@@ -90,7 +90,7 @@ export function deriveFinancialInsights(input: FinancialAssistantInput): Financi
   const insights: FinancialInsight[] = [];
   const overdueCount = input.transactions.filter((item) => {
     if (item.status !== 'pending') return false;
-    try { return isBefore(parseISO(item.date), new Date()); } catch { return false; }
+    try { return isBefore(parseISO(item.date), startOfDay(new Date())); } catch { return false; }
   }).length;
 
   if (overdueCount > 0) insights.push({
@@ -137,24 +137,26 @@ export function deriveFinancialInsights(input: FinancialAssistantInput): Financi
 
 const id = () => globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const asObject = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
-const amount = (value: unknown) => Math.round(Math.max(0, Number(value) || 0) * 100) / 100;
+const amount = (value: unknown) => typeof value === 'number' && Number.isFinite(value) && value > 0 && value <= 1_000_000_000 ? Math.round(value * 100) / 100 : 0;
 const text = (value: unknown) => String(value ?? '').trim();
 
 export function actionFromToolCall(name: string, rawArgs: unknown, input: FinancialAssistantInput): AssistantAction | null {
   const args = asObject(rawArgs);
   if (name === 'add_transaction') {
+    if (!['income', 'expense'].includes(text(args.type)) || !['paid', 'pending'].includes(text(args.status))) return null;
     const transactionType = args.type === 'income' ? 'income' : 'expense';
     const valid = CATEGORIES.filter((category) => category.type === transactionType);
     const requested = text(args.categoryLabel);
     const category = valid.find((item) => item.label.toLocaleLowerCase('pt-BR') === requested.toLocaleLowerCase('pt-BR')) ?? valid[valid.length - 1];
     const value = amount(args.amount);
     if (!category || value <= 0) return null;
-    const date = /^\d{4}-\d{2}-\d{2}$/.test(text(args.date)) ? text(args.date) : format(new Date(), 'yyyy-MM-dd');
+    const date = text(args.date);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !isValid(parseISO(date))) return null;
     const description = text(args.description) || category.label;
     const status: TransactionStatus = args.status === 'pending' ? 'pending' : 'paid';
     return {
       id: id(), type: 'add_transaction', title: transactionType === 'income' ? 'Adicionar entrada' : 'Adicionar despesa',
-      description: `${description} · ${money(value)} · ${date}`,
+      description: `${description} · ${money(value)} · ${category.label} · ${format(parseISO(date), 'dd/MM/yyyy')} · ${status === 'paid' ? 'Confirmado' : 'Pendente'}`,
       args: { amount: value, transactionType, status, description, categoryLabel: category.label, date },
     };
   }
@@ -175,6 +177,7 @@ export function actionFromToolCall(name: string, rawArgs: unknown, input: Financ
     return { id: id(), type: 'add_goal_progress', title: 'Atualizar meta', description: `${goal.name} · +${money(value)}`, args: { goalId: goal.id, amount: value } };
   }
   if (name === 'mark_transaction') {
+    if (!['paid', 'pending'].includes(text(args.status))) return null;
     const transaction = input.transactions.find((item) => item.id === text(args.transactionId));
     if (!transaction) return null;
     const status: TransactionStatus = args.status === 'pending' ? 'pending' : 'paid';

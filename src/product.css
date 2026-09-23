@@ -1,0 +1,59 @@
+.account-content { padding: 26px; display: grid; gap: 20px; }
+.account-content p { color: var(--muted); font-size: .85rem; line-height: 1.7; }
+.account-form { display: grid; gap: 18px; }
+.account-form > svg { color: var(--brand); }
+.account-identity { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.account-identity strong { overflow-wrap: anywhere; }
+.account-identity small { display: block; color: var(--muted); margin-top: 6px; }
+.account-plan { display: grid; gap: 15px; padding: 24px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface-soft); }
+.account-plan > small,.account-note { color: var(--muted); font-size: .74rem; line-height: 1.6; }
+.account-price { font-size: 2rem; letter-spacing: -.05em; }
+.account-price small { font-size: .85rem; letter-spacing: 0; font-weight: 400; }
+.account-cloud { display: flex; gap: 10px; flex-wrap: wrap; }
+.account-message { background: var(--brand-soft); padding: 14px; border-radius: 10px; }
+.account-info { display: grid; gap: 15px; }
+.account-danger { border-top: 1px solid var(--line); padding-top: 16px; }
+.account-danger summary { cursor: pointer; font-size: .85rem; }
+.account-danger > button { display: block; margin-top: 14px; }
+@media (max-width: 760px) { .account-open span { display: none; } .account-open { min-width: 36px; padding: 8px; border: 0; } .topbar h1 { white-space: nowrap; font-size: 1.1rem; } }
+.financial-charts { display: grid; grid-template-columns: 1.1fr 1fr; gap: 20px; }
+.financial-charts .panel { min-width: 0; }
+.financial-charts .eyebrow { color: var(--brand); margin-bottom: 8px; display: block; }
+.history-summary { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 0 20px; }
+.history-summary > span { color: var(--muted); font-size: .8rem; text-transform: capitalize; }
+.history-summary > div { display: flex; flex-wrap: wrap; gap: 15px; }
+.history-summary > div > span { display: flex; align-items: center; gap: 5px; font-size: .82rem; font-weight: 600; }
+.history-summary > div > span:first-child { color: var(--brand); }
+.history-summary > div > span:last-child { color: #b36b35; }
+.monthly-bars { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 10px; height: 210px; background: repeating-linear-gradient(to top,transparent 0,transparent 47px,var(--line) 48px,transparent 49px); }
+.monthly-bars button { display: flex; flex-direction: column; justify-content: flex-end; gap: 10px; min-width: 0; padding: 8px 6px 0; border: 0; border-radius: 9px 9px 0 0; background: transparent; color: var(--muted); font: inherit; font-size: .75rem; }
+.monthly-bars button[aria-pressed="true"] { background: var(--brand-soft); color: var(--brand); }
+.bar-pair { display: flex; width: 100%; height: 175px; gap: 5px; align-items: flex-end; justify-content: center; }
+.bar-pair i { width: min(22px,40%); min-height: 2px; border-radius: 5px 5px 0 0; transform-origin: bottom; animation: progress-grow .6s ease both; }
+.bar-income,.legend-income { background: #14b8a6; }
+.bar-expense,.legend-expense { background: #f5a65b; }
+.chart-legend { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin-top: 20px; font-size: .7rem; color: var(--muted); }
+.chart-legend > span { display: flex; align-items: center; gap: 6px; }
+.chart-legend i { width: 9px; height: 9px; border-radius: 3px; }
+.chart-legend small { margin-left: auto; font-size: .65rem; }
+.distribution-body { display: flex; align-items: center; gap: 24px; padding: 20px 0; }
+.expense-donut { display: grid; place-items: center; width: 185px; height: 185px; flex-shrink: 0; border-radius: 50%; box-shadow: 0 8px 24px rgb(20 184 166 / 8%); }
+.expense-donut > div { display: flex; flex-direction: column; justify-content: center; align-items: center; width: 149px; height: 149px; border-radius: 50%; background: var(--surface); gap: 7px; }
+.expense-donut small,.expense-donut span { color: var(--muted); font-size: .67rem; }
+.expense-donut strong { font-size: 1.1rem; letter-spacing: -.04em; }
+.distribution-legend { flex: 1; min-width: 0; }
+.distribution-legend > button,.distribution-legend > div { display: flex; width: 100%; gap: 9px; align-items: center; padding: 9px 0; color: var(--ink); border: 0; background: transparent; text-align: left; }
+.distribution-legend > button:hover { color: var(--brand); }
+.distribution-legend i { width: 8px; height: 8px; flex-shrink: 0; border-radius: 50%; }
+.distribution-legend span { flex: 1; font-size: .76rem; overflow-wrap: anywhere; }
+.distribution-legend small { display: block; margin-top: 3px; color: var(--muted); font-size: .65rem; }
+.distribution-legend b { font-size: .72rem; font-weight: 500; }
+.setup-checklist { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+.setup-checklist button { display: flex; gap: 13px; align-items: center; text-align: left; padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; color: var(--ink); }
+.setup-checklist button > span:first-child { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); flex-shrink: 0; }
+.setup-checklist strong { display: block; font-size: .85rem; }
+.setup-checklist small { display: block; color: var(--muted); margin-top: 5px; font-size: .73rem; line-height: 1.5; }
+@media (max-width: 1200px) { .distribution-body { flex-direction: column; align-items: stretch; } .expense-donut { align-self: center; } }
+@media (max-width: 760px) { .financial-charts,.setup-checklist { grid-template-columns: 1fr; } .distribution-body { flex-direction: row; gap: 16px; } .expense-donut { width: 135px; height: 135px; } .expense-donut > div { width: 108px; height: 108px; } .expense-donut strong { font-size: .88rem; } .monthly-bars { gap: 5px; } .iq-chat.panel { padding: 0; } .iq-composer textarea { font-size: 16px; resize: none; } .app-shell:has(.iq-layout) .mobile-fab { display: none; } }
+@media (max-width: 370px) { .distribution-body { flex-direction: column; } }
+@media (prefers-reduced-motion: reduce) { .bar-pair i { animation: none; } }
