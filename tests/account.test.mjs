@@ -20,35 +20,38 @@ describe('account API boundaries', () => {
     expect(await response.json()).toEqual({ accounts: false, billing: false, price: null });
   });
   it('does not allow unauthenticated cloud access', async () => {
-    vi.stubEnv('SUPABASE_URL', 'https://supabase.example'); vi.stubEnv('SUPABASE_ANON_KEY', 'test'); vi.stubEnv('APP_URL', 'https://surreal.example');
+    vi.stubEnv('SUPABASE_URL', 'https://supabase.example'); vi.stubEnv('SUPABASE_PUBLISHABLE_KEY', 'sb_publishable_test'); vi.stubEnv('APP_URL', 'https://surreal.example');
     const fetchMock = vi.fn(); vi.stubGlobal('fetch', fetchMock);
     const response = await handler(new Request('https://surreal.example/.netlify/functions/account?action=cloud'));
     expect(response.status).toBe(401); expect(fetchMock).not.toHaveBeenCalled();
   });
   it('uses the default Supabase magic link and returns it to the configured app origin', async () => {
-    vi.stubEnv('SUPABASE_URL', 'https://supabase.example'); vi.stubEnv('SUPABASE_ANON_KEY', 'test'); vi.stubEnv('APP_URL', 'https://surreal.example/app');
+    vi.stubEnv('SUPABASE_URL', 'https://supabase.example'); vi.stubEnv('SUPABASE_PUBLISHABLE_KEY', 'sb_publishable_test'); vi.stubEnv('APP_URL', 'https://surreal.example/app');
     const fetchMock = vi.fn().mockResolvedValue(new Response('{}', { status: 200 })); vi.stubGlobal('fetch', fetchMock);
     const response = await handler(new Request('https://surreal.example/.netlify/functions/account?action=send-link', { method: 'POST', headers: { Origin: 'https://surreal.example', 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'test@example.com' }) }));
     expect(response.status).toBe(200);
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({ email: 'test@example.com', email_redirect_to: 'https://surreal.example/?account=1' });
+    expect(fetchMock.mock.calls[0][1].headers.apikey).toBe('sb_publishable_test');
+    expect(fetchMock.mock.calls[0][1].headers.Authorization).toBeUndefined();
   });
   it('validates a magic-link token before putting it in the secure session cookie', async () => {
-    vi.stubEnv('SUPABASE_URL', 'https://supabase.example'); vi.stubEnv('SUPABASE_ANON_KEY', 'test'); vi.stubEnv('APP_URL', 'https://surreal.example');
+    vi.stubEnv('SUPABASE_URL', 'https://supabase.example'); vi.stubEnv('SUPABASE_PUBLISHABLE_KEY', 'sb_publishable_test'); vi.stubEnv('APP_URL', 'https://surreal.example');
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: 'user-1', email: 'test@example.com' }), { status: 200 })); vi.stubGlobal('fetch', fetchMock);
     const token = 'a'.repeat(64);
     const response = await handler(new Request('https://surreal.example/.netlify/functions/account?action=adopt-session', { method: 'POST', headers: { Origin: 'https://surreal.example', 'Content-Type': 'application/json' }, body: JSON.stringify({ accessToken: token }) }));
     expect(response.status).toBe(200);
     expect(response.headers.get('set-cookie')).toContain('__Host-surreal-session=');
+    expect(fetchMock.mock.calls[0][1].headers.apikey).toBe('sb_publishable_test');
     expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe(`Bearer ${token}`);
   });
   it('requires active membership before storing a cloud backup', async () => {
-    vi.stubEnv('SUPABASE_URL', 'https://supabase.example'); vi.stubEnv('SUPABASE_ANON_KEY', 'test'); vi.stubEnv('APP_URL', 'https://surreal.example'); vi.stubEnv('BILLING_ENABLED', 'false');
+    vi.stubEnv('SUPABASE_URL', 'https://supabase.example'); vi.stubEnv('SUPABASE_PUBLISHABLE_KEY', 'sb_publishable_test'); vi.stubEnv('APP_URL', 'https://surreal.example'); vi.stubEnv('BILLING_ENABLED', 'false');
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: 'user-1', email: 'test@example.com' }), { status: 200 })); vi.stubGlobal('fetch', fetchMock);
     const response = await handler(new Request('https://surreal.example/.netlify/functions/account?action=cloud', { method: 'POST', headers: { Origin: 'https://surreal.example', Cookie: '__Host-surreal-session=test', 'Content-Type': 'application/json' }, body: '{}' }));
     expect(response.status).toBe(403); expect(fetchMock).toHaveBeenCalledTimes(1);
   });
   it('sends an existing past-due subscription to the portal instead of creating another subscription', async () => {
-    vi.stubEnv('SUPABASE_URL', 'https://supabase.example'); vi.stubEnv('SUPABASE_ANON_KEY', 'test'); vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'server-only');
+    vi.stubEnv('SUPABASE_URL', 'https://supabase.example'); vi.stubEnv('SUPABASE_PUBLISHABLE_KEY', 'sb_publishable_test'); vi.stubEnv('SUPABASE_SECRET_KEY', 'sb_secret_server-only');
     vi.stubEnv('APP_URL', 'https://surreal.example'); vi.stubEnv('BILLING_ENABLED', 'true'); vi.stubEnv('STRIPE_SECRET_KEY', 'test-secret'); vi.stubEnv('STRIPE_PRICE_ID', 'price_test');
     const fetchMock = vi.fn();
     for (const payload of [{ id: 'user-1', email: 'test@example.com' }, [{ customer_id: 'cus_test' }], { data: [{ id: 'sub_test', status: 'past_due', items: { data: [{ price: { id: 'price_test' } }] } }] }, { url: 'https://billing.stripe.com/p/session/test' }]) fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(payload)));

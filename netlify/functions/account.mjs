@@ -1,7 +1,10 @@
 const COOKIE = '__Host-surreal-session';
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...headers } });
-const configured = () => Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY && process.env.APP_URL);
-const billingReady = () => Boolean(process.env.BILLING_ENABLED === 'true' && process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_ID && process.env.SUPABASE_SERVICE_ROLE_KEY);
+const publishableKey = () => process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
+const secretKey = () => process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+const isLegacyJwtKey = (key) => typeof key === 'string' && key.startsWith('eyJ');
+const configured = () => Boolean(process.env.SUPABASE_URL && publishableKey() && process.env.APP_URL);
+const billingReady = () => Boolean(process.env.BILLING_ENABLED === 'true' && process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_ID && secretKey());
 const fail = (status, message) => { throw Object.assign(new Error(message), { status }); };
 
 export function sessionCookie(token, seconds = 3600) {
@@ -20,8 +23,9 @@ async function upstream(url, options = {}) {
 }
 
 function supabase(path, options = {}, token, admin = false) {
-  const key = admin ? process.env.SUPABASE_SERVICE_ROLE_KEY : process.env.SUPABASE_ANON_KEY;
-  return upstream(`${process.env.SUPABASE_URL}${path}`, { ...options, headers: { apikey: key, Authorization: `Bearer ${token || key}`, 'Content-Type': 'application/json', ...options.headers } });
+  const key = admin ? secretKey() : publishableKey();
+  const authorization = token ? { Authorization: `Bearer ${token}` } : isLegacyJwtKey(key) ? { Authorization: `Bearer ${key}` } : {};
+  return upstream(`${process.env.SUPABASE_URL}${path}`, { ...options, headers: { apikey: key, ...authorization, 'Content-Type': 'application/json', ...options.headers } });
 }
 
 async function identity(request) {
@@ -50,7 +54,7 @@ async function customerFor(user, create = false) {
 }
 
 async function subscriptionFor(user) {
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return { active: false, customer: null, subscription: null };
+  if (!secretKey()) return { active: false, customer: null, subscription: null };
   const customer = await customerFor(user);
   if (!customer) return { active: false, customer: null, subscription: null };
   if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_PRICE_ID) fail(503, 'Não foi possível verificar sua assinatura. Tente novamente mais tarde.');
@@ -132,7 +136,7 @@ export default async function handler(request) {
       return json({ ok: true });
     }
     if (action === 'delete-account' && request.method === 'POST') {
-      if (!process.env.SUPABASE_SERVICE_ROLE_KEY) fail(503, 'A exclusão de conta está temporariamente indisponível.');
+      if (!secretKey()) fail(503, 'A exclusão de conta está temporariamente indisponível.');
       const membership = await subscriptionFor(user);
       if (membership.customer) {
         const subscriptions = await stripe(`subscriptions?customer=${encodeURIComponent(membership.customer)}&status=all&limit=100`);
