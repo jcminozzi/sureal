@@ -1,8 +1,21 @@
 # surReal
 
-**Dinheiro real, sem complicação.**
+**Seu dinheiro, com inteligência.**
 
-O surReal ajuda a registrar entradas e saídas, acompanhar pendências, organizar cartões, parcelamentos, empréstimos, investimentos, limites mensais e metas financeiras. Não exige conta, conexão bancária ou envio dos lançamentos para um servidor: os dados ficam no navegador do próprio dispositivo.
+O surReal ajuda a registrar entradas e saídas, acompanhar pendências, organizar cartões, parcelamentos, empréstimos, investimentos, limites mensais e metas financeiras. Sem ativar o surReal IQ, não exige conta, conexão bancária ou envio dos lançamentos para um servidor: os dados ficam no navegador do próprio dispositivo.
+
+O **surReal IQ** adiciona um copiloto financeiro opcional. Ele analisa o recorte de dados que aparece na conversa, responde perguntas e prepara ações no aplicativo. Toda mudança precisa ser confirmada antes de ser aplicada.
+
+## surReal IQ
+
+- Chat financeiro contextual em português
+- Leitura de entradas, despesas, categorias, limites, metas e pendências
+- Ações confirmáveis para adicionar lançamentos, definir orçamento, criar ou atualizar metas e alterar status
+- Alertas locais imediatos mesmo antes de chamar a IA
+- Consentimento explícito e opção de desligar a integração
+- Integração via Puter.js, sem chave de API ou conta de cobrança do desenvolvedor
+
+Ao usar o chat, um recorte dos dados financeiros necessários para a pergunta é enviado à Puter e ao provedor do modelo. O restante do aplicativo continua local e pode ser usado sem ativar a IA. Cada usuário utiliza a própria franquia da Puter; quando ela termina, a própria plataforma informa as opções disponíveis.
 
 ## Interface e navegação
 
@@ -41,7 +54,7 @@ O surReal ajuda a registrar entradas e saídas, acompanhar pendências, organiza
 
 Os dados financeiros são armazenados localmente no IndexedDB, com fallback para o armazenamento local do navegador. Isso significa que:
 
-- o aplicativo não cria conta nem envia lançamentos financeiros para uma API;
+- o aplicativo principal não cria conta nem envia lançamentos financeiros para uma API; o envio só ocorre ao perguntar algo no surReal IQ depois do consentimento;
 - apagar os dados do navegador pode apagar os dados do aplicativo;
 - antes de trocar de aparelho ou limpar o navegador, baixe um backup em **Configurações → Seus dados**;
 - o backup contém informações financeiras em texto legível e deve ser guardado em local seguro.

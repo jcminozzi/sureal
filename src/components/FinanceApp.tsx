@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { addMonths, format, isSameMonth, parseISO, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowLeft, ArrowRight, BadgeCheck, CalendarClock, Check, CreditCard, Eye, EyeOff, FileUp, Flag, Gauge, LayoutDashboard, Landmark, ListFilter, LockKeyhole, Moon, Plus, Search, Settings, Sun, Target, Trash2, Wallet, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BadgeCheck, CalendarClock, Check, CreditCard, Eye, EyeOff, FileUp, Flag, Gauge, LayoutDashboard, Landmark, ListFilter, LockKeyhole, Moon, Plus, Search, Settings, Sparkles, Sun, Target, Trash2, Wallet, X } from 'lucide-react';
 import { EXPENSE_CATEGORIES } from '../constants/categories';
 import {
   createTransactionSeries,
@@ -15,12 +15,13 @@ import type { Goal, Transaction, TransactionDraft, TransactionType } from '../ty
 import { SettingsPanel, type SettingsSection } from './SettingsPanel';
 import { CategoryIcon } from './CategoryIcon';
 import { Dashboard } from './Dashboard';
+import { AssistantView } from './AssistantView';
 import { TransactionForm } from './TransactionForm';
 import { WealthView } from './WealthView';
 
 const ImportPanel = lazy(() => import('./ImportPanel').then((module) => ({ default: module.ImportPanel })));
 
-type View = 'overview' | 'transactions' | 'budgets' | 'goals' | 'wealth';
+type View = 'assistant' | 'overview' | 'transactions' | 'budgets' | 'goals' | 'wealth';
 type TransactionFilter = 'all' | 'income' | 'expense';
 type StatusFilter = 'all' | 'paid' | 'pending';
 
@@ -119,7 +120,7 @@ function GoalCard({ goal, hidden, onUpdate, onDelete }: {
 
 export function FinanceApp() {
   const store = useStore();
-  const [view, setView] = useState<View>('overview');
+  const [view, setView] = useState<View>('assistant');
   const [transactionModal, setTransactionModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [settingsSection, setSettingsSection] = useState<SettingsSection | null>(null);
@@ -193,6 +194,7 @@ export function FinanceApp() {
   }
 
   const navItems: { id: View; label: string; icon: React.ReactNode }[] = [
+    { id: 'assistant', label: 'surReal IQ', icon: <Sparkles size={19} /> },
     { id: 'overview', label: 'Visão geral', icon: <LayoutDashboard size={19} /> },
     { id: 'transactions', label: 'Lançamentos', icon: <ListFilter size={19} /> },
     { id: 'budgets', label: 'Orçamento', icon: <Gauge size={19} /> },
@@ -204,7 +206,7 @@ export function FinanceApp() {
     <div className="app-shell">
       <a className="skip-link" href="#main-content">Pular para o conteúdo</a>
       <aside className="sidebar">
-        <div className="brand"><span className="brand-mark">sR</span><span><strong className="brand-wordmark">sur<span className="brand-real">Real</span></strong><small>Finanças pessoais</small></span></div>
+        <div className="brand"><span className="brand-mark">sR</span><span><strong className="brand-wordmark">sur<span className="brand-real">Real</span></strong><small>Inteligência financeira</small></span></div>
         <span className="nav-caption">Seu dinheiro</span>
         <nav aria-label="Navegação principal">{navItems.map((item) => <button key={item.id} aria-current={view === item.id ? 'page' : undefined} className={view === item.id ? 'is-active' : ''} onClick={() => setView(item.id)}>{item.icon}<span>{item.label}</span>{view === item.id && <span className="nav-active-dot" />}</button>)}</nav>
         <span className="nav-caption nav-caption--tools">Organizar</span>
@@ -224,8 +226,8 @@ export function FinanceApp() {
         </header>
 
         <main className="content" id="main-content" tabIndex={-1}>
-          <div className="page-toolbar"><p>{view === 'overview' ? 'Seu mês, em perspectiva.' : view === 'transactions' ? 'Encontre e organize suas entradas e saídas.' : 'Organize hoje. Planeje o próximo passo.'}</p>
-          {view !== 'goals' && view !== 'wealth' &&
+          <div className="page-toolbar"><p>{view === 'assistant' ? 'Converse, entenda e aja com confirmação.' : view === 'overview' ? 'Seu mês, em perspectiva.' : view === 'transactions' ? 'Encontre e organize suas entradas e saídas.' : 'Organize hoje. Planeje o próximo passo.'}</p>
+          {view !== 'assistant' && view !== 'goals' && view !== 'wealth' &&
           <section className="month-toolbar" aria-label="Escolher mês">
             <button className="icon-button" onClick={() => store.setCurrentDate((date) => subMonths(date, 1))} aria-label="Mês anterior"><ArrowLeft size={18} /></button>
             <div><label className="month-picker"><span>{currentMonthLabel}</span><input type="month" aria-label="Mês de referência" value={format(store.currentDate, 'yyyy-MM')} onChange={(event) => { if (/^\d{4}-\d{2}$/.test(event.target.value)) store.setCurrentDate(parseISO(`${event.target.value}-01`)); }} /></label>{!isSameMonth(store.currentDate, new Date()) && <button onClick={() => store.setCurrentDate(new Date())}>Voltar para hoje</button>}</div>
@@ -233,6 +235,7 @@ export function FinanceApp() {
           </section>}
           </div>
           <div key={view} className="view-transition">
+          {view === 'assistant' && <AssistantView onNotice={(message) => setNotice({ message })} />}
           {view === 'overview' && <Dashboard transactions={monthlyTransactions} onNew={openNewTransaction} onImport={() => setImportOpen(true)} onCards={() => setSettingsSection('cards')} onBudget={() => setView('budgets')}
             onTransactions={(filter = 'all', history = false, category = '') => { setTypeFilter(filter === 'pending' ? 'all' : filter); setStatusFilter(filter === 'pending' ? 'pending' : 'all'); setAllMonths(history); setSearch(category); setCardFilter(''); setView('transactions'); }}
             onEdit={(transaction) => { setEditingTransaction(transaction); setTransactionModal(true); }}
@@ -271,7 +274,7 @@ export function FinanceApp() {
         </main>
       </div>
 
-      <nav className="mobile-nav" aria-label="Navegação no celular">{navItems.map((item) => <button key={item.id} aria-current={view === item.id ? 'page' : undefined} className={view === item.id ? 'is-active' : ''} onClick={() => setView(item.id)}>{item.icon}<span>{item.id === 'overview' ? 'Início' : item.id === 'transactions' ? 'Extrato' : item.id === 'budgets' ? 'Limites' : item.label}</span></button>)}</nav>
+      <nav className="mobile-nav" aria-label="Navegação no celular">{navItems.map((item) => <button key={item.id} aria-current={view === item.id ? 'page' : undefined} className={view === item.id ? 'is-active' : ''} onClick={() => setView(item.id)}>{item.icon}<span>{item.id === 'assistant' ? 'IQ' : item.id === 'overview' ? 'Início' : item.id === 'transactions' ? 'Extrato' : item.id === 'budgets' ? 'Limites' : item.label}</span></button>)}</nav>
       <button className="mobile-fab" onClick={() => openNewTransaction()} aria-label="Novo lançamento"><Plus size={22} /><span>Novo</span></button>
 
       {transactionModal && <TransactionForm initialType={initialType} initialDate={format(isSameMonth(store.currentDate, new Date()) ? new Date() : store.currentDate, 'yyyy-MM-dd')} onOpenCards={() => setSettingsSection('cards')} cards={store.cards} transaction={editingTransaction} onClose={() => { setTransactionModal(false); setEditingTransaction(null); }} onCreate={createTransaction} onUpdate={(id, changes) => { store.updateTransaction(id, changes); setNotice({ message: 'Lançamento atualizado.' }); }} />}

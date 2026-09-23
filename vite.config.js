@@ -15,9 +15,9 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
       },
       manifest: {
-        name: 'surReal',
-        short_name: 'surReal',
-        description: 'Dinheiro real, sem complicação. Controle financeiro completo e privado.',
+        name: 'surReal IQ',
+        short_name: 'surReal IQ',
+        description: 'Seu dinheiro, com inteligência. Copiloto financeiro pessoal e privado.',
         theme_color: '#12212a',
         background_color: '#f4f6f9',
         display: 'standalone',
